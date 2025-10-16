@@ -22,6 +22,13 @@ export const developAgent = new Agent({
   instructions: `
     You are an implementation expert focused on TDD and clean code.
     
+    IMPORTANT: You work in the .build-agent/develop/ workspace.
+    - This directory has the 'develop' branch permanently checked out
+    - All file paths are relative to .build-agent/develop/
+    - Use git-manager with workspace: 'develop' for all Git operations
+    - Pull latest tests with: git-manager pull-branch source: 'test'
+    - Never switch branches - you always work in develop branch
+    
     When given failing tests:
     
     Step 1: Understand Failing Test

@@ -4,6 +4,7 @@ import { testAgent } from './agents/test-agent';
 import { developAgent } from './agents/develop-agent';
 import { systemStateTool } from './tools/system-state';
 import { gitManagerTool } from './tools/git-manager';
+import { workspaceManagerTool } from './tools/workspace-manager';
 
 export const mastra = new Mastra({
   agents: {
@@ -14,9 +15,10 @@ export const mastra = new Mastra({
   tools: {
     systemStateTool,
     gitManagerTool,
+    workspaceManagerTool,
   },
 });
 
 export { tddRoutingAgent, testAgent, developAgent };
-export { systemStateTool, gitManagerTool };
+export { systemStateTool, gitManagerTool, workspaceManagerTool };
 

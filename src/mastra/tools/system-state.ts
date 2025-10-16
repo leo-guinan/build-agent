@@ -20,7 +20,8 @@ export const systemStateTool = new Tool({
     what already exists and what needs to be built.
   `,
   inputSchema: z.object({
-    targetPath: z.string().optional().describe('Path to analyze (default: src/)'),
+    workspace: z.enum(['test', 'develop']).optional().describe('Which workspace to analyze (default: current)'),
+    targetPath: z.string().optional().describe('Path to analyze within workspace (default: src/)'),
     includeTests: z.boolean().optional().describe('Include test files (default: false)'),
   }),
   outputSchema: z.object({
@@ -51,23 +52,35 @@ export const systemStateTool = new Tool({
     }),
   }),
   execute: async ({ context }: any) => {
+    const workspace = context?.workspace;
+    const projectRoot = process.cwd();
+    
+    // Determine base path
+    let basePath = projectRoot;
+    if (workspace) {
+      basePath = path.join(projectRoot, '.build-agent', workspace);
+    }
+    
     const targetPath = context?.targetPath || 'src';
+    const fullPath = path.join(basePath, targetPath);
     const includeTests = context?.includeTests || false;
 
     // Collect file structure
-    const structure = await collectFileStructure(targetPath);
+    const structure = await collectFileStructure(fullPath);
 
     // Read file contents
-    const files = await readFiles(targetPath, includeTests);
+    const files = await readFiles(fullPath, includeTests);
 
     // Parse package.json
-    const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'));
+    const packageJsonPath = path.join(basePath, 'package.json');
+    const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
 
     // Get test coverage (if exists)
     let testCoverage;
     try {
+      const coveragePath = path.join(basePath, 'coverage/coverage-summary.json');
       const coverageData = JSON.parse(
-        await fs.readFile('coverage/coverage-summary.json', 'utf-8')
+        await fs.readFile(coveragePath, 'utf-8')
       );
       const total = coverageData.total;
       testCoverage = {
@@ -82,7 +95,7 @@ export const systemStateTool = new Tool({
     }
 
     // Get git info
-    const git = await getGitInfo();
+    const git = await getGitInfo(basePath);
 
     return {
       structure,
@@ -163,21 +176,24 @@ async function readFiles(
   return files;
 }
 
-async function getGitInfo(): Promise<{
+async function getGitInfo(basePath: string): Promise<{
   branch: string;
   lastCommit: string;
   uncommittedChanges: boolean;
 }> {
   try {
     const branch = execSync('git branch --show-current', {
+      cwd: basePath,
       encoding: 'utf-8',
     }).trim();
 
     const lastCommit = execSync('git log -1 --oneline', {
+      cwd: basePath,
       encoding: 'utf-8',
     }).trim();
 
     const status = execSync('git status --short', {
+      cwd: basePath,
       encoding: 'utf-8',
     }).trim();
 

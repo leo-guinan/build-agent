@@ -1,27 +1,32 @@
 import { Tool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { execSync } from 'child_process';
+import path from 'path';
 
 export const gitManagerTool = new Tool({
   id: 'git-manager',
   description: `
-    Manages Git operations for TDD workflow.
+    Manages Git operations for TDD workflow with isolated workspaces.
     
     Operations:
-    - Switch branches (test, develop)
-    - Commit changes with messages
-    - Cherry-pick commits between branches
-    - Check branch status
-    - Merge branches
+    - pull-branch: Pull changes from another branch into workspace
+    - commit: Commit changes in workspace
+    - push: Push commits to remote
+    - status: Check workspace git status
+    - sync: Merge changes from other branch
     
-    All operations are safe (won't force push or destroy history).
+    Workspaces:
+    - test: .build-agent/test/ (always on test branch)
+    - develop: .build-agent/develop/ (always on develop branch)
+    
+    No branch switching - each workspace stays on its branch.
   `,
   inputSchema: z.object({
-    operation: z.enum(['switch-branch', 'commit', 'cherry-pick', 'status', 'merge']),
-    branch: z.string().optional().describe('Branch name (for switch, merge)'),
+    operation: z.enum(['pull-branch', 'commit', 'push', 'status', 'sync']),
+    workspace: z.enum(['test', 'develop']).describe('Which workspace to operate in'),
+    sourceBranch: z.string().optional().describe('Branch to pull from (for pull-branch)'),
     message: z.string().optional().describe('Commit message'),
     files: z.array(z.string()).optional().describe('Files to add (for commit)'),
-    commitSha: z.string().optional().describe('Commit to cherry-pick'),
   }),
   outputSchema: z.object({
     success: z.boolean(),
@@ -30,62 +35,95 @@ export const gitManagerTool = new Tool({
     lastCommit: z.string().optional(),
   }),
   execute: async ({ context }: any) => {
-    const { operation, branch, message, files, commitSha } = context || {};
+    const { operation, workspace, sourceBranch, message, files } = context || {};
+    const projectRoot = process.cwd();
+    const workspacePath = path.join(projectRoot, '.build-agent', workspace || '');
 
     try {
       switch (operation) {
-        case 'switch-branch':
-          if (!branch) {
-            throw new Error('Branch name required for switch-branch operation');
+        case 'pull-branch': {
+          if (!sourceBranch) {
+            throw new Error('Source branch required for pull-branch operation');
           }
-          execSync(`git checkout ${branch}`, { stdio: 'pipe' });
+          
+          execSync(`git fetch origin ${sourceBranch}`, {
+            cwd: workspacePath,
+            stdio: 'pipe',
+          });
+          
+          execSync(`git pull origin ${sourceBranch}`, {
+            cwd: workspacePath,
+            stdio: 'pipe',
+          });
+
           return {
             success: true,
-            message: `Switched to branch '${branch}'`,
-            currentBranch: branch,
+            message: `Pulled ${sourceBranch} into ${workspace} workspace`,
           };
+        }
 
-        case 'commit':
+        case 'commit': {
           if (!message) {
             throw new Error('Commit message required for commit operation');
           }
 
           // Add files
           if (files && files.length > 0) {
-            execSync(`git add ${files.join(' ')}`, { stdio: 'pipe' });
+            execSync(`git add ${files.join(' ')}`, {
+              cwd: workspacePath,
+              stdio: 'pipe',
+            });
           } else {
-            // Add all changes if no specific files
-            execSync('git add -A', { stdio: 'pipe' });
+            execSync('git add -A', {
+              cwd: workspacePath,
+              stdio: 'pipe',
+            });
           }
 
           // Commit
-          execSync(`git commit -m "${message}"`, { stdio: 'pipe' });
+          execSync(`git commit -m "${message}"`, {
+            cwd: workspacePath,
+            stdio: 'pipe',
+          });
 
           const commitHash = execSync('git rev-parse HEAD', {
+            cwd: workspacePath,
             encoding: 'utf-8',
           }).trim();
 
           return {
             success: true,
-            message: `Committed: ${message}`,
+            message: `Committed in ${workspace}: ${message}`,
             lastCommit: commitHash,
           };
+        }
 
-        case 'cherry-pick':
-          if (!commitSha) {
-            throw new Error('Commit SHA required for cherry-pick operation');
-          }
-          execSync(`git cherry-pick ${commitSha}`, { stdio: 'pipe' });
+        case 'push': {
+          const currentBranch = execSync('git branch --show-current', {
+            cwd: workspacePath,
+            encoding: 'utf-8',
+          }).trim();
+
+          execSync(`git push origin ${currentBranch}`, {
+            cwd: workspacePath,
+            stdio: 'pipe',
+          });
+
           return {
             success: true,
-            message: `Cherry-picked commit ${commitSha}`,
+            message: `Pushed ${workspace} workspace to origin/${currentBranch}`,
+            currentBranch,
           };
+        }
 
-        case 'status':
+        case 'status': {
           const status = execSync('git status --short', {
+            cwd: workspacePath,
             encoding: 'utf-8',
           });
+          
           const currentBranch = execSync('git branch --show-current', {
+            cwd: workspacePath,
             encoding: 'utf-8',
           }).trim();
 
@@ -94,18 +132,27 @@ export const gitManagerTool = new Tool({
             message: status || 'No changes',
             currentBranch,
           };
+        }
 
-        case 'merge':
-          if (!branch) {
-            throw new Error('Branch name required for merge operation');
-          }
-          execSync(`git merge ${branch} --no-ff -m "merge: Merge ${branch} into current branch"`, {
+        case 'sync': {
+          // Sync: merge changes from other branch
+          const otherBranch = workspace === 'test' ? 'develop' : 'test';
+
+          execSync(`git fetch origin ${otherBranch}`, {
+            cwd: workspacePath,
             stdio: 'pipe',
           });
+          
+          execSync(`git merge origin/${otherBranch} --no-ff -m "merge: Sync ${otherBranch} into ${workspace}"`, {
+            cwd: workspacePath,
+            stdio: 'pipe',
+          });
+
           return {
             success: true,
-            message: `Merged branch '${branch}'`,
+            message: `Synced ${otherBranch} into ${workspace} workspace`,
           };
+        }
 
         default:
           throw new Error(`Unknown operation: ${operation}`);

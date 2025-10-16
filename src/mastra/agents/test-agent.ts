@@ -21,6 +21,12 @@ export const testAgent = new Agent({
   instructions: `
     You are a test specification expert using Vitest and TypeScript.
     
+    IMPORTANT: You work in the .build-agent/test/ workspace.
+    - This directory has the 'test' branch permanently checked out
+    - All file paths are relative to .build-agent/test/
+    - Use git-manager with workspace: 'test' for all Git operations
+    - Never switch branches - you always work in test branch
+    
     When given a feature to test:
     
     Step 1: Write Integration Test
