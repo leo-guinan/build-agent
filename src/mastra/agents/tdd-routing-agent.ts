@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { openai } from '@ai-sdk/openai';
-import { Memory } from '@mastra/memory';
-import { LibSQLStorage } from '../storage/libsql-storage';
+// import { Memory } from '@mastra/memory';
+// import { LibSQLStorage } from '../storage/libsql-storage';
 import { testAgent } from './test-agent';
 import { developAgent } from './develop-agent';
 import { systemStateTool } from '../tools/system-state';
@@ -108,10 +108,12 @@ export const tddRoutingAgent = new Agent({
     // workspaceManager removed - workspaces already initialized manually
     fileWriter: fileWriterTool,
   },
-  memory: new Memory({
-    storage: new LibSQLStorage({
-      url: 'file:./mastra-tdd.db',
-    }),
-  }),
+  // Memory disabled for now - agent networks can work without it for simple cases
+  // Re-enable with proper storage when needed for production
+  // memory: new Memory({
+  //   storage: new LibSQLStorage({
+  //     url: 'file:./mastra-tdd.db',
+  //   }),
+  // }),
 });
 
