@@ -4,8 +4,12 @@ import ora from 'ora';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { openai } from '@ai-sdk/openai';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateText } from 'ai';
+
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY || '',
+});
 
 export const planCommand = new Command('plan')
   .description('Generate a detailed plan to solve a problem (for use with Cursor)')
@@ -120,9 +124,9 @@ OUTPUT FORMAT:
 Keep it actionable and specific.
 `;
 
-      // Use OpenAI SDK directly (bypass Mastra agent issues)
+      // Use OpenRouter (no quota issues, many model choices)
       const testPlanResponse = await generateText({
-        model: openai('gpt-4o-mini'),
+        model: openrouter('google/gemini-2.0-flash-001:free'), // Free, fast, good quality
         prompt: testPlanPrompt,
       });
       
@@ -193,9 +197,9 @@ OUTPUT FORMAT:
 Keep it specific and actionable for Cursor to implement.
 `;
 
-      // Use OpenAI SDK directly (bypass Mastra agent issues)
+      // Use OpenRouter (no quota issues, many model choices)
       const implPlanResponse = await generateText({
-        model: openai('gpt-4o-mini'),
+        model: openrouter('google/gemini-2.0-flash-001:free'), // Free, fast, good quality
         prompt: implPlanPrompt,
       });
       
