@@ -103,7 +103,7 @@ export const developAgent = new Agent({
     - Write minimal code (just enough to pass test)
     - File paths: src/commands/, src/lib/, src/ui/, src/utils/
   `,
-  model: openai('gpt-4o-mini'), // NOTE: Fast and cheap model (gpt-4o-mini is correct)
+  model: openai('gpt-5-nano'), 
   tools: {
     fileWriter: fileWriterTool,
     gitManager: gitManagerTool,

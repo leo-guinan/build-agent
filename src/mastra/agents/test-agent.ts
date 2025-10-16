@@ -100,7 +100,7 @@ export const testAgent = new Agent({
     - Mock external dependencies (GitHub API, OpenAI, etc.)
     - Each test should test ONE thing
   `,
-  model: openai('gpt-4o-mini'), // NOTE: Fast and cheap model (gpt-4o-mini, not gpt-5-nano)
+  model: openai('gpt-5-nano'), 
   tools: {
     fileWriter: fileWriterTool,
     gitManager: gitManagerTool,
