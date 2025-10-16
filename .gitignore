@@ -38,6 +38,7 @@ Thumbs.db
 # Build Agent specific
 .build-agent/
 .mastra/
+workspaces/
 mastra-tdd.db
 mastra-tdd.db-shm
 mastra-tdd.db-wal
