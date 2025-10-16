@@ -1,6 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { openai } from '@ai-sdk/openai';
 import { gitManagerTool } from '../tools/git-manager';
+import { fileWriterTool } from '../tools/file-writer';
 
 export const testAgent = new Agent({
   name: 'test-agent',
@@ -50,12 +51,18 @@ export const testAgent = new Agent({
     - Tests have clear names describing behavior
     - Tests follow AAA pattern (Arrange, Act, Assert)
     
-    Step 4: Return Test Code
-    - Provide complete, runnable test code
-    - Include all necessary imports
-    - Include mocks and setup
-    - Use describe/it blocks properly
-    - Follow Vitest syntax
+    Step 4: Write Test File to Disk
+    - Use file-writer tool with operation: 'write'
+    - workspace: 'test'
+    - filePath: 'tests/commands/<feature>.test.ts' or 'tests/lib/<component>.test.ts'
+    - content: complete test code with all imports and describe/it blocks
+    - Create parent directories automatically
+    
+    Step 5: Commit Test File
+    - Use git-manager tool with operation: 'commit'
+    - workspace: 'test'
+    - message: 'test: Add <feature> test specifications'
+    - files: ['tests/commands/<feature>.test.ts']
     
     Test Code Format:
     \`\`\`typescript
@@ -80,16 +87,22 @@ export const testAgent = new Agent({
     });
     \`\`\`
     
+    CRITICAL STEPS - DO NOT SKIP:
+    1. Write test code using file-writer tool
+    2. Commit file using git-manager tool
+    3. Return file path and test count
+    
     IMPORTANT:
-    - Return ONLY the test code, no explanations
+    - ALWAYS use file-writer tool to write files
+    - ALWAYS commit after writing
     - Tests must be complete and runnable
     - Use TypeScript types strictly
     - Mock external dependencies (GitHub API, OpenAI, etc.)
     - Each test should test ONE thing
-    - Test file paths should match implementation paths
   `,
-  model: openai('gpt-4o'),
+  model: openai('gpt-4o-mini'), // NOTE: Fast and cheap model (gpt-4o-mini, not gpt-5-nano)
   tools: {
+    fileWriter: fileWriterTool,
     gitManager: gitManagerTool,
   },
 });

@@ -7,6 +7,7 @@ import { developAgent } from './develop-agent';
 import { systemStateTool } from '../tools/system-state';
 import { gitManagerTool } from '../tools/git-manager';
 import { workspaceManagerTool } from '../tools/workspace-manager';
+import { fileWriterTool } from '../tools/file-writer';
 
 export const tddRoutingAgent = new Agent({
   name: 'tdd-routing-agent',
@@ -100,7 +101,7 @@ export const tddRoutingAgent = new Agent({
       "summary": "Feature description and completion status"
     }
   `,
-  model: openai('gpt-4o'),
+  model: openai('gpt-4o-mini'), // NOTE: gpt-4o-mini is the fast/cheap model (gpt-5-nano doesn't exist)
   agents: {
     testAgent,
     developAgent,
@@ -109,6 +110,7 @@ export const tddRoutingAgent = new Agent({
     systemStateTool,
     gitManager: gitManagerTool,
     workspaceManager: workspaceManagerTool,
+    fileWriter: fileWriterTool,
   },
   memory: new Memory({
     storage: new LibSQLStorage({

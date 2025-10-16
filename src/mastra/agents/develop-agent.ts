@@ -1,6 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { openai } from '@ai-sdk/openai';
 import { gitManagerTool } from '../tools/git-manager';
+import { fileWriterTool } from '../tools/file-writer';
 
 export const developAgent = new Agent({
   name: 'develop-agent',
@@ -44,12 +45,24 @@ export const developAgent = new Agent({
     - Keep functions small and focused (< 50 lines)
     - Follow SOLID principles
     
-    Step 3: Return Implementation Code
-    - Provide complete, runnable code
-    - Include all necessary imports
-    - Include proper TypeScript types
-    - Follow project code style
-    - Add minimal comments (only WHY, not WHAT)
+    Step 3: Pull Latest Tests
+    - Use git-manager tool with operation: 'pull-branch'
+    - workspace: 'develop'
+    - sourceBranch: 'test'
+    - This gets the latest test files from test workspace
+    
+    Step 4: Write Implementation File to Disk
+    - Use file-writer tool with operation: 'write'
+    - workspace: 'develop'
+    - filePath: 'src/commands/<feature>.ts' or 'src/lib/<component>.ts'
+    - content: complete implementation code with all imports
+    - Create parent directories automatically
+    
+    Step 5: Commit Implementation
+    - Use git-manager tool with operation: 'commit'
+    - workspace: 'develop'
+    - message: 'feat: Implement <feature> (passes <test-file>)'
+    - files: ['src/commands/<feature>.ts']
     
     Implementation Code Format:
     \`\`\`typescript
@@ -75,20 +88,24 @@ export const developAgent = new Agent({
     - YAGNI (You Aren't Gonna Need It)
     - KISS (Keep It Simple, Stupid)
     
+    CRITICAL STEPS - DO NOT SKIP:
+    1. Pull latest tests from test branch
+    2. Write implementation using file-writer tool
+    3. Commit using git-manager tool
+    4. Return file path and test results
+    
     IMPORTANT:
-    - Return ONLY the implementation code, no explanations
+    - ALWAYS use file-writer tool to write files
+    - ALWAYS pull tests before implementing
+    - ALWAYS commit after writing
     - Code must be complete and runnable
     - Use TypeScript types strictly
-    - Follow the project's existing patterns
     - Write minimal code (just enough to pass test)
-    - File paths should match test file structure
-    - src/commands/ for commands
-    - src/lib/ for core logic
-    - src/ui/ for terminal UI
-    - src/utils/ for utilities
+    - File paths: src/commands/, src/lib/, src/ui/, src/utils/
   `,
-  model: openai('gpt-4o'),
+  model: openai('gpt-4o-mini'), // NOTE: Fast and cheap model (gpt-4o-mini is correct)
   tools: {
+    fileWriter: fileWriterTool,
     gitManager: gitManagerTool,
   },
 });
