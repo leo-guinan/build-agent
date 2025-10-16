@@ -1,6 +1,6 @@
-import { Agent } from '@mastra/core';
+import { Agent } from '@mastra/core/agent';
 import { openai } from '@ai-sdk/openai';
-import { Memory } from '@mastra/memory';
+// import { Memory } from '@mastra/memory';
 import { testAgent } from './test-agent';
 import { developAgent } from './develop-agent';
 import { systemStateTool } from '../tools/system-state';
@@ -95,8 +95,7 @@ export const tddRoutingAgent = new Agent({
     systemStateTool,
     gitManager: gitManagerTool,
   },
-  memory: new Memory({
-    resourceId: 'tdd-workflow',
-  }),
+  // Note: Memory removed for now - network may work without it for simple cases
+  // Will add proper storage configuration later if needed
 });
 

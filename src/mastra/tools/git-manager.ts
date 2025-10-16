@@ -1,8 +1,8 @@
-import { createTool } from '@mastra/core';
+import { Tool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { execSync } from 'child_process';
 
-export const gitManagerTool = createTool({
+export const gitManagerTool = new Tool({
   id: 'git-manager',
   description: `
     Manages Git operations for TDD workflow.
@@ -29,8 +29,8 @@ export const gitManagerTool = createTool({
     currentBranch: z.string().optional(),
     lastCommit: z.string().optional(),
   }),
-  execute: async ({ context }) => {
-    const { operation, branch, message, files, commitSha } = context;
+  execute: async ({ context }: any) => {
+    const { operation, branch, message, files, commitSha } = context || {};
 
     try {
       switch (operation) {

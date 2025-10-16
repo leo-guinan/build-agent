@@ -1,10 +1,10 @@
-import { createTool } from '@mastra/core';
+import { Tool } from '@mastra/core/tools';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
 import { execSync } from 'child_process';
 
-export const systemStateTool = createTool({
+export const systemStateTool = new Tool({
   id: 'system-state-collector',
   description: `
     Collects current codebase state for TDD agents.
@@ -50,9 +50,9 @@ export const systemStateTool = createTool({
       uncommittedChanges: z.boolean(),
     }),
   }),
-  execute: async ({ context }) => {
-    const targetPath = context.targetPath || 'src';
-    const includeTests = context.includeTests || false;
+  execute: async ({ context }: any) => {
+    const targetPath = context?.targetPath || 'src';
+    const includeTests = context?.includeTests || false;
 
     // Collect file structure
     const structure = await collectFileStructure(targetPath);
