@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { openai } from '@ai-sdk/openai';
 import { gitManagerTool } from '../tools/git-manager';
-import { fileWriterTool } from '../tools/file-writer';
+import { shellExecutorTool } from '../tools/shell-executor';
 
 export const developAgent = new Agent({
   name: 'develop-agent',
@@ -97,15 +97,22 @@ export const developAgent = new Agent({
     IMPORTANT:
     - ALWAYS use file-writer tool to write files
     - ALWAYS pull tests before implementing
-    - ALWAYS commit after writing
+    - ALWAYS use shell-executor to write files (cat with heredoc)
+    - ALWAYS commit after writing (git add . && git commit)
     - Code must be complete and runnable
     - Use TypeScript types strictly
     - Write minimal code (just enough to pass test)
     - File paths: src/commands/, src/lib/, src/ui/, src/utils/
+    
+    SHELL COMMAND TIPS:
+    - Create dirs: mkdir -p src/commands
+    - Write files: cat > file.ts << 'EOF' ... EOF
+    - Run tests: npm test
+    - Commit: git add . && git commit -m "feat: message"
   `,
-  model: openai('gpt-5-nano'), 
+  model: openai('gpt-4o-mini'), 
   tools: {
-    fileWriter: fileWriterTool,
+    shellExecutor: shellExecutorTool,
     gitManager: gitManagerTool,
   },
 });

@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { openai } from '@ai-sdk/openai';
 import { gitManagerTool } from '../tools/git-manager';
-import { fileWriterTool } from '../tools/file-writer';
+import { shellExecutorTool } from '../tools/shell-executor';
 
 export const testAgent = new Agent({
   name: 'test-agent',
@@ -52,11 +52,17 @@ export const testAgent = new Agent({
     - Tests follow AAA pattern (Arrange, Act, Assert)
     
     Step 4: Write Test File to Disk
-    - Use file-writer tool with operation: 'write'
+    - Use shell-executor tool to write files
+    - Use cat with heredoc for multi-line files
     - workspace: 'test'
-    - filePath: 'tests/commands/<feature>.test.ts' or 'tests/lib/<component>.test.ts'
-    - content: complete test code with all imports and describe/it blocks
-    - Create parent directories automatically
+    - Example command:
+      mkdir -p tests/commands && cat > tests/commands/hello.test.ts << 'EOF'
+      import { hello } from '../../src/commands/hello';
+      
+      test('hello returns greeting', () => {
+        expect(hello()).toBe('Hello!');
+      });
+      EOF
     
     Step 5: Commit Test File
     - Use git-manager tool with operation: 'commit'
@@ -93,16 +99,22 @@ export const testAgent = new Agent({
     3. Return file path and test count
     
     IMPORTANT:
-    - ALWAYS use file-writer tool to write files
-    - ALWAYS commit after writing
+    - ALWAYS use shell-executor tool to write files (cat with heredoc)
+    - ALWAYS commit after writing (git add . && git commit)
     - Tests must be complete and runnable
     - Use TypeScript types strictly
     - Mock external dependencies (GitHub API, OpenAI, etc.)
     - Each test should test ONE thing
+    
+    SHELL COMMAND TIPS:
+    - Create dirs: mkdir -p tests/commands
+    - Write files: cat > file.ts << 'EOF' ... EOF
+    - Commit: git add . && git commit -m "test: message"
+    - Check files: ls -la tests/
   `,
-  model: openai('gpt-5-nano'), 
+  model: openai('gpt-4o-mini'), 
   tools: {
-    fileWriter: fileWriterTool,
+    shellExecutor: shellExecutorTool,
     gitManager: gitManagerTool,
   },
 });

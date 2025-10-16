@@ -5,7 +5,7 @@ import { testAgent } from './test-agent';
 import { developAgent } from './develop-agent';
 import { systemStateTool } from '../tools/system-state';
 import { gitManagerTool } from '../tools/git-manager';
-import { fileWriterTool } from '../tools/file-writer';
+import { shellExecutorTool } from '../tools/shell-executor';
 import { debugInspectorTool } from '../tools/debug-inspector';
 
 export const tddRoutingAgent = new Agent({
@@ -120,7 +120,7 @@ export const tddRoutingAgent = new Agent({
   tools: {
     systemStateTool,
     gitManager: gitManagerTool,
-    fileWriter: fileWriterTool,
+    shellExecutor: shellExecutorTool,
     debugInspector: debugInspectorTool,
   },
     
