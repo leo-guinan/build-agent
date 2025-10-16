@@ -1,13 +1,12 @@
 import { Agent } from '@mastra/core/agent';
 import { openai } from '@ai-sdk/openai';
-// import { Memory } from '@mastra/memory';
-// import { LibSQLStorage } from '../storage/libsql-storage';
+import { Memory } from  '@mastra/memory';
 import { testAgent } from './test-agent';
 import { developAgent } from './develop-agent';
 import { systemStateTool } from '../tools/system-state';
 import { gitManagerTool } from '../tools/git-manager';
-import { workspaceManagerTool } from '../tools/workspace-manager';
 import { fileWriterTool } from '../tools/file-writer';
+import { debugInspectorTool } from '../tools/debug-inspector';
 
 export const tddRoutingAgent = new Agent({
   name: 'tdd-routing-agent',
@@ -57,9 +56,25 @@ export const tddRoutingAgent = new Agent({
     - Each iteration implements ONE small piece
     - Maximum 20 iterations per feature
     
-    PHASE 6: COMPLETION
+    PHASE 6: SELF-DEBUGGING (if things fail)
+    - Use debug-inspector tool to check what actually happened
+    - operation: 'check-files' to see if files were created
+    - operation: 'git-history' to see if commits happened
+    - operation: 'read-agent-code' to check agent instructions
+    - If files not created: agents might not be calling file-writer
+    - If commits empty: files not written before commit attempted
+    - LEARN from failures and adjust approach
+    
+    PHASE 7: COMPLETION
     - Sync final changes (develop → test)
     - Return summary of work completed
+    
+    SELF-HEALING: If TDD cycle fails:
+    1. Use debug-inspector to check-files in both workspaces
+    2. Use debug-inspector to read test-agent and develop-agent code
+    3. Identify why tools aren't being called
+    4. Provide detailed diagnosis in output
+    5. Suggest fixes (e.g., "test-agent not calling file-writer tool")
     
     Key principles:
     - Tests ALWAYS written before implementation
@@ -97,7 +112,7 @@ export const tddRoutingAgent = new Agent({
       "summary": "Feature description and completion status"
     }
   `,
-  model: openai('gpt-4o-mini'), // Fast & cheap: $0.150/1M input, $0.600/1M output 
+  model: openai('gpt-5-nano'), 
   agents: {
     testAgent,
     developAgent,
@@ -105,15 +120,10 @@ export const tddRoutingAgent = new Agent({
   tools: {
     systemStateTool,
     gitManager: gitManagerTool,
-    // workspaceManager removed - workspaces already initialized manually
     fileWriter: fileWriterTool,
+    debugInspector: debugInspectorTool,
   },
-  // Memory disabled for now - agent networks can work without it for simple cases
-  // Re-enable with proper storage when needed for production
-  // memory: new Memory({
-  //   storage: new LibSQLStorage({
-  //     url: 'file:./mastra-tdd.db',
-  //   }),
-  // }),
+    
+  memory: new Memory(),
 });
 

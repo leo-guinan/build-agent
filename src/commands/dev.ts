@@ -31,8 +31,8 @@ export const devCommand = new Command('dev')
       }
     }
 
-    // Start Mastra dev server in background with log redirection
-    const command = `npx mastra dev --port 4111 >> ${LOG_FILE} 2>&1 & echo $!`;
+    // Start our custom server (bypasses Mastra CLI bundler issues)
+    const command = `tsx src/mastra/server.ts >> ${LOG_FILE} 2>&1 & echo $!`;
     
     exec(command, (error, stdout, stderr) => {
       if (error) {
@@ -48,17 +48,21 @@ export const devCommand = new Command('dev')
       console.log(chalk.green('✅ Mastra Dev Server started!\n'));
       console.log(chalk.white('  PID:'), chalk.cyan(pid));
       console.log(chalk.white('  Port:'), chalk.cyan('4111'));
-      console.log(chalk.white('  Playground:'), chalk.cyan('http://localhost:4111/playground'));
+      console.log(chalk.white('  Health:'), chalk.cyan('http://localhost:4111/health'));
       console.log(chalk.white('  Logs:'), chalk.cyan(LOG_FILE));
       console.log();
       console.log(chalk.gray('  View logs:'), chalk.white(`tail -f ${LOG_FILE}`));
       console.log(chalk.gray('  Stop server:'), chalk.white('build-agent dev:stop'));
       console.log();
-      console.log(chalk.yellow('💡 Tip:'), 'Open playground to test TDD agents visually');
-      console.log(chalk.gray('   - Test tdd-routing-agent with feature descriptions'));
-      console.log(chalk.gray('   - Test test-agent to see if it calls file-writer'));
-      console.log(chalk.gray('   - Test develop-agent with test files'));
-      console.log(chalk.gray('   - Debug tool usage and agent reasoning'));
+      console.log(chalk.yellow('💡 Test Agents via API:'));
+      console.log(chalk.gray(`   curl -X POST http://localhost:4111/api/agents/testAgent/test \\`));
+      console.log(chalk.gray(`     -H "Content-Type: application/json" \\`));
+      console.log(chalk.gray(`     -d '{"prompt": "Write test for hello command"}'`));
+      console.log();
+      console.log(chalk.yellow('💡 Run TDD Network:'));
+      console.log(chalk.gray(`   curl -X POST http://localhost:4111/api/tdd \\`));
+      console.log(chalk.gray(`     -H "Content-Type: application/json" \\`));
+      console.log(chalk.gray(`     -d '{"feature": "Add hello command"}'`));
       console.log();
     });
 

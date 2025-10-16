@@ -6,6 +6,9 @@ import { systemStateTool } from './tools/system-state';
 import { gitManagerTool } from './tools/git-manager';
 import { workspaceManagerTool } from './tools/workspace-manager';
 import { fileWriterTool } from './tools/file-writer';
+import { debugInspectorTool } from './tools/debug-inspector';
+
+import { LibSQLStore } from "@mastra/libsql";
 
 export const mastra = new Mastra({
   agents: {
@@ -18,9 +21,13 @@ export const mastra = new Mastra({
     gitManagerTool,
     workspaceManagerTool,
     fileWriterTool,
+    debugInspectorTool,
   },
+  storage: new LibSQLStore({
+    url: ":memory:"
+  }),
 });
 
 export { tddRoutingAgent, testAgent, developAgent };
-export { systemStateTool, gitManagerTool, workspaceManagerTool, fileWriterTool };
+export { systemStateTool, gitManagerTool, workspaceManagerTool, fileWriterTool, debugInspectorTool };
 
