@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { tddCommand } from './commands/tdd';
 import { devCommand, devStopCommand, devStatusCommand, devLogsCommand } from './commands/dev';
+import { solveCommand } from './commands/solve';
 
 const program = new Command();
 
@@ -20,6 +21,9 @@ program.addCommand(devLogsCommand);
 
 // TDD command - use AI agents to implement features
 program.addCommand(tddCommand);
+
+// Solve command - fix problems in any GitHub repo
+program.addCommand(solveCommand);
 
 // TODO: Add commands (init, run, chat, status, server)
 // Will be implemented via TDD agent network
