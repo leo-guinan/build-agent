@@ -12,6 +12,7 @@ export const solveCommand = new Command('solve')
   .argument('<problem>', 'Problem statement to solve')
   .option('--workspace-dir <dir>', 'Workspace directory', './workspaces')
   .option('--timeout <seconds>', 'Timeout in seconds', '600')
+  .option('--skip-install', 'Skip dependency installation (faster)', false)
   .action(async (repoUrl: string, problem: string, options) => {
     console.log(chalk.cyan('🔧 Problem Solver Starting...\n'));
     console.log(chalk.white('Repository:'), chalk.gray(repoUrl));
@@ -41,10 +42,26 @@ export const solveCommand = new Command('solve')
         spinner.text = 'Cloning repository...';
         execSync(`git clone ${repoUrl} ${mainPath}`, { stdio: 'pipe' });
         
-        // Install dependencies
-        spinner.text = 'Installing dependencies...';
-        if (fs.existsSync(path.join(mainPath, 'package.json'))) {
-          execSync('npm install', { cwd: mainPath, stdio: 'pipe' });
+        // Install dependencies (unless skipped)
+        if (!options.skipInstall && fs.existsSync(path.join(mainPath, 'package.json'))) {
+          const packageManager = detectPackageManager(mainPath);
+          spinner.text = `Installing dependencies with ${packageManager}...`;
+          
+          try {
+            if (packageManager === 'pnpm') {
+              execSync('pnpm install --frozen-lockfile', { cwd: mainPath, stdio: 'pipe' });
+            } else if (packageManager === 'yarn') {
+              execSync('yarn install --frozen-lockfile', { cwd: mainPath, stdio: 'pipe' });
+            } else {
+              execSync('npm ci', { cwd: mainPath, stdio: 'pipe' });
+            }
+          } catch (error: any) {
+            // If install fails, continue anyway (might work without deps)
+            console.log(chalk.yellow(`\n   ⚠️  Dependency installation failed`));
+            console.log(chalk.gray('   Continuing anyway...\n'));
+          }
+        } else if (options.skipInstall) {
+          console.log(chalk.gray('   Skipping dependency installation...\n'));
         }
       }
 
@@ -66,7 +83,14 @@ export const solveCommand = new Command('solve')
         execSync(`git clone -b test ${mainPath} ${testPath}`, { stdio: 'pipe' });
         
         if (fs.existsSync(path.join(testPath, 'package.json'))) {
-          execSync('npm install', { cwd: testPath, stdio: 'pipe' });
+          const packageManager = detectPackageManager(testPath);
+          try {
+            if (packageManager === 'pnpm') {
+              execSync('pnpm install', { cwd: testPath, stdio: 'pipe' });
+            } else {
+              execSync('npm install', { cwd: testPath, stdio: 'pipe' });
+            }
+          } catch {}
         }
       }
 
@@ -83,8 +107,26 @@ export const solveCommand = new Command('solve')
         execSync(`git clone -b develop ${mainPath} ${developPath}`, { stdio: 'pipe' });
         
         if (fs.existsSync(path.join(developPath, 'package.json'))) {
-          execSync('npm install', { cwd: developPath, stdio: 'pipe' });
+          const packageManager = detectPackageManager(developPath);
+          try {
+            if (packageManager === 'pnpm') {
+              execSync('pnpm install', { cwd: developPath, stdio: 'pipe' });
+            } else {
+              execSync('npm install', { cwd: developPath, stdio: 'pipe' });
+            }
+          } catch {}
         }
+      }
+
+      // Helper function to detect package manager
+      function detectPackageManager(projectPath: string): 'pnpm' | 'yarn' | 'npm' {
+        if (fs.existsSync(path.join(projectPath, 'pnpm-lock.yaml'))) {
+          return 'pnpm';
+        }
+        if (fs.existsSync(path.join(projectPath, 'yarn.lock'))) {
+          return 'yarn';
+        }
+        return 'npm';
       }
 
       spinner.succeed(chalk.green('✅ Workspaces ready!\n'));
