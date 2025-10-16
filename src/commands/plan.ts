@@ -4,7 +4,7 @@ import ora from 'ora';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { testAgent, developAgent } from '../mastra';
+import { testPlanningAgent, implementationPlanningAgent } from '../mastra/agents/planning-agents';
 
 export const planCommand = new Command('plan')
   .description('Generate a detailed plan to solve a problem (for use with Cursor)')
@@ -119,7 +119,36 @@ OUTPUT FORMAT:
 Keep it actionable and specific.
 `;
 
-      const testPlan = await testAgent.generate(testPlanPrompt);
+      const testPlan = await testPlanningAgent.generate(testPlanPrompt);
+      
+      // Debug: log response structure
+      console.log(chalk.gray(`   Response type: ${typeof testPlan}`));
+      if (typeof testPlan === 'object') {
+        console.log(chalk.gray(`   Response keys: ${Object.keys(testPlan).join(', ')}`));
+        console.log(chalk.gray(`   .text length: ${(testPlan.text || '').length}`));
+        console.log(chalk.gray(`   .steps length: ${(testPlan.steps || []).length}`));
+        if (testPlan.response) {
+          console.log(chalk.gray(`   .response keys: ${Object.keys(testPlan.response).join(', ')}`));
+          if (testPlan.response.messages && Array.isArray(testPlan.response.messages)) {
+            console.log(chalk.gray(`   .response.messages length: ${testPlan.response.messages.length}`));
+            if (testPlan.response.messages.length > 0) {
+              const lastMsg = testPlan.response.messages[testPlan.response.messages.length - 1];
+              console.log(chalk.gray(`   Last message keys: ${Object.keys(lastMsg || {}).join(', ')}`));
+              console.log(chalk.gray(`   Last message content: ${JSON.stringify(lastMsg).substring(0, 100)}`));
+            }
+          }
+        }
+        if (Array.isArray(testPlan.steps) && testPlan.steps.length > 0) {
+          const lastStep = testPlan.steps[testPlan.steps.length - 1];
+          console.log(chalk.gray(`   Last step keys: ${Object.keys(lastStep || {}).join(', ')}`));
+          console.log(chalk.gray(`   Last step text length: ${(lastStep?.text || '').length}`));
+          console.log(chalk.gray(`   Last step content length: ${Array.isArray(lastStep?.content) ? lastStep.content.length : 0}`));
+          if (Array.isArray(lastStep?.content) && lastStep.content.length > 0) {
+            const firstContent = lastStep.content[0];
+            console.log(chalk.gray(`   First content keys: ${Object.keys(firstContent || {}).join(', ')}`));
+          }
+        }
+      }
       
       // Extract text from response (handle different formats)
       let testPlanText = '';
@@ -134,11 +163,17 @@ Keep it actionable and specific.
           testPlanText = testPlan.response.text || testPlan.response.content || '';
         }
         
+        // Check for steps array (from structured responses)
+        if (!testPlanText && Array.isArray(testPlan.steps)) {
+          const lastStep = testPlan.steps[testPlan.steps.length - 1];
+          testPlanText = lastStep?.text || lastStep?.content || '';
+        }
+        
         // If still no text, try to find any string property
         if (!testPlanText) {
           const values = Object.values(testPlan);
           const firstString = values.find(v => typeof v === 'string' && v.length > 50);
-          testPlanText = firstString || 'Error: Could not extract text from agent response';
+          testPlanText = firstString || JSON.stringify(testPlan, null, 2);
         }
       }
       
@@ -207,7 +242,13 @@ OUTPUT FORMAT:
 Keep it specific and actionable for Cursor to implement.
 `;
 
-      const implPlan = await developAgent.generate(implPlanPrompt);
+      const implPlan = await implementationPlanningAgent.generate(implPlanPrompt);
+      
+      // Debug: log response structure
+      console.log(chalk.gray(`   Response type: ${typeof implPlan}`));
+      if (typeof implPlan === 'object') {
+        console.log(chalk.gray(`   Response keys: ${Object.keys(implPlan).join(', ')}`));
+      }
       
       // Extract text from response (handle different formats)
       let implPlanText = '';
@@ -222,11 +263,17 @@ Keep it specific and actionable for Cursor to implement.
           implPlanText = implPlan.response.text || implPlan.response.content || '';
         }
         
+        // Check for steps array (from structured responses)
+        if (!implPlanText && Array.isArray(implPlan.steps)) {
+          const lastStep = implPlan.steps[implPlan.steps.length - 1];
+          implPlanText = lastStep?.text || lastStep?.content || '';
+        }
+        
         // If still no text, try to find any string property
         if (!implPlanText) {
           const values = Object.values(implPlan);
           const firstString = values.find(v => typeof v === 'string' && v.length > 50);
-          implPlanText = firstString || 'Error: Could not extract text from agent response';
+          implPlanText = firstString || JSON.stringify(implPlan, null, 2);
         }
       }
       
