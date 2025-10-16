@@ -21,23 +21,19 @@ export const tddRoutingAgent = new Agent({
     - Agents pull from each other's branches to sync changes
     
     Your job:
-    1. Initialize workspaces if needed (first run)
-    2. Understand the desired feature/change from user input
-    3. Collect current system state from both workspaces
-    4. Route to Test Agent to write tests in .build-agent/test/
-    5. Route to Develop Agent to implement in .build-agent/develop/
-    6. Iterate until all tests pass
-    7. Return completion summary
+    1. Understand the desired feature/change from user input
+    2. Collect current system state from develop workspace
+    3. Route to Test Agent to write tests in .build-agent/test/
+    4. Route to Develop Agent to implement in .build-agent/develop/
+    5. Iterate until all tests pass
+    6. Return completion summary
+    
+    NOTE: Workspaces (.build-agent/test/ and .build-agent/develop/) already exist.
+    Do not try to initialize them - they are permanent checkouts.
     
     Workflow Process:
     
-    PHASE 1: INITIALIZATION
-    - Use workspace-manager tool with operation: 'init'
-    - Creates .build-agent/test/ (test branch)
-    - Creates .build-agent/develop/ (develop branch)
-    - Each workspace is full git repo with dependencies installed
-    
-    PHASE 2: ANALYSIS
+    PHASE 1: ANALYSIS
     - Parse user request to understand feature
     - Use system-state-collector with workspace: 'develop'
     - Identify what needs to be built
@@ -101,7 +97,7 @@ export const tddRoutingAgent = new Agent({
       "summary": "Feature description and completion status"
     }
   `,
-  model: openai('gpt-5-nano'), 
+  model: openai('gpt-4o-mini'), // Fast & cheap: $0.150/1M input, $0.600/1M output 
   agents: {
     testAgent,
     developAgent,
@@ -109,7 +105,7 @@ export const tddRoutingAgent = new Agent({
   tools: {
     systemStateTool,
     gitManager: gitManagerTool,
-    workspaceManager: workspaceManagerTool,
+    // workspaceManager removed - workspaces already initialized manually
     fileWriter: fileWriterTool,
   },
   memory: new Memory({
