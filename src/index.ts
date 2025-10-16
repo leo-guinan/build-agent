@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { tddCommand } from './commands/tdd';
 import { devCommand, devStopCommand, devStatusCommand, devLogsCommand } from './commands/dev';
 import { solveCommand } from './commands/solve';
+import { planCommand } from './commands/plan';
 
 const program = new Command();
 
@@ -24,6 +25,9 @@ program.addCommand(tddCommand);
 
 // Solve command - fix problems in any GitHub repo
 program.addCommand(solveCommand);
+
+// Plan command - generate solution plan for Cursor
+program.addCommand(planCommand);
 
 // TODO: Add commands (init, run, chat, status, server)
 // Will be implemented via TDD agent network
