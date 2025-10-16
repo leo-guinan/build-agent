@@ -112,7 +112,7 @@ export const tddRoutingAgent = new Agent({
       "summary": "Feature description and completion status"
     }
   `,
-  model: openai('gpt-5-nano'), 
+  model: openai('gpt-4o-mini'), 
   agents: {
     testAgent,
     developAgent,
