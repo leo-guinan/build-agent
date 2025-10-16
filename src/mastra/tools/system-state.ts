@@ -65,6 +65,8 @@ export const systemStateTool = new Tool({
     const fullPath = path.join(basePath, targetPath);
     const includeTests = context?.includeTests || false;
 
+    console.log(`[system-state] Analyzing workspace: ${workspace || 'main'}, path: ${fullPath}`);
+
     // Collect file structure
     const structure = await collectFileStructure(fullPath);
 

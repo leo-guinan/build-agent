@@ -39,12 +39,15 @@ export const workspaceManagerTool = new Tool({
       .optional(),
   }),
   execute: async ({ context }: any) => {
+    console.log('[workspace-manager] Executing:', context?.operation);
+    
     const projectRoot = context?.projectRoot || process.cwd();
     const workspaceRoot = path.join(projectRoot, '.build-agent');
 
     try {
       switch (context?.operation) {
         case 'init': {
+          console.log('[workspace-manager] Initializing workspaces in:', workspaceRoot);
           // Create .build-agent directory
           if (!fs.existsSync(workspaceRoot)) {
             fs.mkdirSync(workspaceRoot, { recursive: true });

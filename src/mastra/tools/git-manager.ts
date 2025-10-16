@@ -39,6 +39,8 @@ export const gitManagerTool = new Tool({
     const projectRoot = process.cwd();
     const workspacePath = path.join(projectRoot, '.build-agent', workspace || '');
 
+    console.log(`[git-manager] Operation: ${operation}, Workspace: ${workspace}`);
+
     try {
       switch (operation) {
         case 'pull-branch': {
