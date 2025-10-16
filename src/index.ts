@@ -2,6 +2,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { tddCommand } from './commands/tdd';
 
 const program = new Command();
 
@@ -10,8 +11,11 @@ program
   .description('CLI tool for launching validated ideas with AI-guided waterfall methodology')
   .version('0.1.0');
 
+// TDD command - use AI agents to implement features
+program.addCommand(tddCommand);
+
 // TODO: Add commands (init, run, chat, status, server)
-// Will be implemented in TDD fashion
+// Will be implemented via TDD agent network
 
 program.parse();
 
