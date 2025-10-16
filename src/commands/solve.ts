@@ -75,47 +75,27 @@ export const solveCommand = new Command('solve')
       spinner.text = 'Creating test workspace...';
       const testPath = path.join(workspaceRoot, 'test');
       if (!fs.existsSync(testPath)) {
-        // Create test branch from main
+        // Create test branch in main repo (local only, no push)
         execSync('git checkout -b test', { cwd: mainPath, stdio: 'pipe' });
-        execSync('git push -u origin test', { cwd: mainPath, stdio: 'pipe' });
         
-        // Clone test workspace
+        // Clone test workspace from local main repo
         execSync(`git clone -b test ${mainPath} ${testPath}`, { stdio: 'pipe' });
         
-        if (fs.existsSync(path.join(testPath, 'package.json'))) {
-          const packageManager = detectPackageManager(testPath);
-          try {
-            if (packageManager === 'pnpm') {
-              execSync('pnpm install', { cwd: testPath, stdio: 'pipe' });
-            } else {
-              execSync('npm install', { cwd: testPath, stdio: 'pipe' });
-            }
-          } catch {}
-        }
+        // Skip dependency install (workspaces share with main)
       }
 
       // Create develop branch and workspace
       spinner.text = 'Creating develop workspace...';
       const developPath = path.join(workspaceRoot, 'develop');
       if (!fs.existsSync(developPath)) {
-        // Create develop branch from main
+        // Create develop branch from main (local only, no push)
         execSync(`git checkout ${defaultBranch}`, { cwd: mainPath, stdio: 'pipe' });
         execSync('git checkout -b develop', { cwd: mainPath, stdio: 'pipe' });
-        execSync('git push -u origin develop', { cwd: mainPath, stdio: 'pipe' });
         
-        // Clone develop workspace
+        // Clone develop workspace from local main repo
         execSync(`git clone -b develop ${mainPath} ${developPath}`, { stdio: 'pipe' });
         
-        if (fs.existsSync(path.join(developPath, 'package.json'))) {
-          const packageManager = detectPackageManager(developPath);
-          try {
-            if (packageManager === 'pnpm') {
-              execSync('pnpm install', { cwd: developPath, stdio: 'pipe' });
-            } else {
-              execSync('npm install', { cwd: developPath, stdio: 'pipe' });
-            }
-          } catch {}
-        }
+        // Skip dependency install (workspaces share with main)
       }
 
       // Helper function to detect package manager
