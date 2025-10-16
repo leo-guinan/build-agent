@@ -31,37 +31,39 @@ export const devCommand = new Command('dev')
       }
     }
 
-    // Create log file
-    const logStream = fs.createWriteStream(LOG_FILE, { flags: 'a' });
+    // Start Mastra dev server in background with log redirection
+    const command = `npx mastra dev --port 4111 >> ${LOG_FILE} 2>&1 & echo $!`;
     
-    // Spawn Mastra dev server as detached background process
-    const serverProcess = spawn('npx', ['mastra', 'dev', '--port', '4111'], {
-      detached: true,
-      stdio: ['ignore', logStream, logStream],
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(chalk.red('❌ Failed to start server:'), error.message);
+        return;
+      }
+      
+      const pid = stdout.trim();
+      
+      // Save PID
+      fs.writeFileSync(PID_FILE, pid);
+
+      console.log(chalk.green('✅ Mastra Dev Server started!\n'));
+      console.log(chalk.white('  PID:'), chalk.cyan(pid));
+      console.log(chalk.white('  Port:'), chalk.cyan('4111'));
+      console.log(chalk.white('  Playground:'), chalk.cyan('http://localhost:4111/playground'));
+      console.log(chalk.white('  Logs:'), chalk.cyan(LOG_FILE));
+      console.log();
+      console.log(chalk.gray('  View logs:'), chalk.white(`tail -f ${LOG_FILE}`));
+      console.log(chalk.gray('  Stop server:'), chalk.white('build-agent dev:stop'));
+      console.log();
+      console.log(chalk.yellow('💡 Tip:'), 'Open playground to test TDD agents visually');
+      console.log(chalk.gray('   - Test tdd-routing-agent with feature descriptions'));
+      console.log(chalk.gray('   - Test test-agent to see if it calls file-writer'));
+      console.log(chalk.gray('   - Test develop-agent with test files'));
+      console.log(chalk.gray('   - Debug tool usage and agent reasoning'));
+      console.log();
     });
 
-    // Save PID
-    fs.writeFileSync(PID_FILE, serverProcess.pid!.toString());
-
-    // Detach so parent can exit
-    serverProcess.unref();
-
-    // Wait a moment for server to start
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    console.log(chalk.green('✅ Mastra Dev Server started!\n'));
-    console.log(chalk.white('  PID:'), chalk.cyan(serverProcess.pid));
-    console.log(chalk.white('  Port:'), chalk.cyan('4111'));
-    console.log(chalk.white('  Playground:'), chalk.cyan('http://localhost:4111/playground'));
-    console.log(chalk.white('  Logs:'), chalk.cyan(LOG_FILE));
-    console.log();
-    console.log(chalk.gray('  View logs:'), chalk.white(`tail -f ${LOG_FILE}`));
-    console.log(chalk.gray('  Stop server:'), chalk.white('build-agent dev:stop'));
-    console.log();
-    console.log(chalk.yellow('💡 Tip:'), 'Open playground to test TDD agents visually');
-    console.log(chalk.gray('   Test routing-agent, test-agent, develop-agent'));
-    console.log(chalk.gray('   Debug tool usage (file-writer, git-manager)'));
-    console.log();
+    // Wait a moment for command to execute
+    await new Promise(resolve => setTimeout(resolve, 1000));
   });
 
 // Add stop command
