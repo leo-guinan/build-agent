@@ -11,10 +11,11 @@ PROBLEM="$2"
 OUTPUT_FILE="${3:-SOLUTION_PLAN.md}"
 
 if [ -z "$PROBLEM" ]; then
-    log_error "Usage: planning-agent.sh <repo-path> <problem-description> [output-file]"
+    log_error "Usage: planning-agent.sh <repo-path-or-url> <problem-description> [output-file]"
     echo ""
     echo "Example:"
     echo "  planning-agent.sh ./mastra-repo \"Fix bundler import bug\" PLAN.md"
+    echo "  planning-agent.sh https://github.com/org/repo \"Fix bug\" PLAN.md"
     exit 1
 fi
 
@@ -27,8 +28,38 @@ echo ""
 # Validate requirements
 validate_requirements || exit 1
 
+# Check if REPO_PATH is a URL (GitHub)
+if [[ "$REPO_PATH" =~ ^https?:// ]]; then
+    log_info "Detected GitHub URL, setting up workspace..."
+    
+    # Extract repo name from URL
+    REPO_NAME=$(echo "$REPO_PATH" | sed -E 's|.*/([^/]+/[^/]+)(\.git)?$|\1|' | tr '/' '-')
+    WORKSPACE_DIR="workspaces/$REPO_NAME/main"
+    
+    # Check if workspace exists
+    if [ ! -d "$WORKSPACE_DIR" ]; then
+        log_info "Workspace doesn't exist, cloning repository..."
+        
+        mkdir -p "workspaces/$REPO_NAME"
+        
+        git clone "$REPO_PATH" "$WORKSPACE_DIR" 2>&1 | grep -v "^Cloning" || true
+        
+        log_success "Repository cloned to $WORKSPACE_DIR"
+    else
+        log_info "Workspace exists, using: $WORKSPACE_DIR"
+    fi
+    
+    REPO_PATH="$WORKSPACE_DIR"
+fi
+
 # Analyze repository
-cd "$REPO_PATH" || exit 1
+cd "$REPO_PATH" || {
+    log_error "Repository path does not exist: $REPO_PATH"
+    log_info "Provide either:"
+    log_info "  - Local path to repository (./my-repo)"
+    log_info "  - GitHub URL (https://github.com/org/repo)"
+    exit 1
+}
 
 log_info "Analyzing repository..."
 
