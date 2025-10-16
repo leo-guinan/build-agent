@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import chalk from 'chalk';
-import { tddCommand } from './commands/tdd';
-import { devCommand, devStopCommand, devStatusCommand, devLogsCommand } from './commands/dev';
 import { solveCommand } from './commands/solve';
 import { planCommand } from './commands/plan';
 
@@ -11,26 +8,14 @@ const program = new Command();
 
 program
   .name('build-agent')
-  .description('CLI tool for launching validated ideas with AI-guided waterfall methodology')
+  .description('CLI tool for AI-assisted development with shell-based agents')
   .version('0.1.0');
 
-// Dev server commands - Mastra playground for debugging
-program.addCommand(devCommand);
-program.addCommand(devStopCommand);
-program.addCommand(devStatusCommand);
-program.addCommand(devLogsCommand);
-
-// TDD command - use AI agents to implement features
-program.addCommand(tddCommand);
-
-// Solve command - fix problems in any GitHub repo
-program.addCommand(solveCommand);
-
-// Plan command - generate solution plan for Cursor
+// Plan command - generate solution plans for Cursor
 program.addCommand(planCommand);
 
-// TODO: Add commands (init, run, chat, status, server)
-// Will be implemented via TDD agent network
+// Solve command - clone repo and create TDD workspaces
+program.addCommand(solveCommand);
 
 program.parse();
 

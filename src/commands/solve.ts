@@ -4,7 +4,6 @@ import ora from 'ora';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { tddRoutingAgent } from '../mastra';
 
 export const solveCommand = new Command('solve')
   .description('Clone a repo, create TDD workspaces, and solve a problem')
@@ -119,111 +118,45 @@ export const solveCommand = new Command('solve')
       console.log(chalk.gray(`   └── develop/  (develop branch - for fixes)`));
       console.log();
 
-      // Now run TDD network to solve the problem
-      console.log(chalk.cyan('🤖 Starting TDD Problem Solver...\n'));
-      console.log(chalk.yellow('Problem to solve:'));
-      console.log(chalk.white(`   ${problem}\n`));
-
-      const solvingSpinner = ora('TDD agents analyzing problem...').start();
-
-      // Update process.cwd() to point to workspace for this operation
-      const originalCwd = process.cwd();
-      process.chdir(workspaceRoot);
-
-      try {
-        const result = await tddRoutingAgent.network(
-          `PROBLEM TO SOLVE:
-${problem}
-
-CONTEXT:
-- You are working on the repository: ${repoUrl}
-- Test workspace: ${testPath}
-- Develop workspace: ${developPath}
-- Use workspace-aware tools (workspace: 'test' or 'develop')
-
-YOUR TASK:
-1. Analyze the problem
-2. Write tests that expose the problem in test workspace
-3. Implement a fix in develop workspace
-4. Ensure all tests pass
-5. Return summary of fix
-
-Use the TDD process:
-- Write failing test that demonstrates the problem
-- Implement minimal fix to make test pass
-- Verify fix doesn't break existing tests
-- Commit everything to appropriate branches
-
-IMPORTANT:
-- Use file-writer tool to write test and fix files
-- Use git-manager with workspace parameter
-- All file paths relative to workspace root
-`
-        );
-
-        let filesChanged: string[] = [];
-        let testsWritten = 0;
-        let testsPassing = 0;
-
-        // Stream results
-        for await (const chunk of result) {
-          if (chunk.type === 'tool-execution-start') {
-            const toolId = (chunk.payload as any).toolId;
-            solvingSpinner.text = `Tool: ${toolId}...`;
-          }
-
-          if (chunk.type === 'agent-execution-start') {
-            const agentName = (chunk.payload as any).agentName;
-            solvingSpinner.text = `Agent: ${agentName}...`;
-          }
-
-          if (chunk.type === 'network-execution-event-step-finish') {
-            const stepResult = (chunk.payload as any).result;
-            if (stepResult) {
-              if (stepResult.filesChanged) filesChanged.push(...stepResult.filesChanged);
-              if (stepResult.testsWritten) testsWritten = stepResult.testsWritten;
-              if (stepResult.testsPassing) testsPassing = stepResult.testsPassing;
-            }
-          }
-        }
-
-        solvingSpinner.succeed(chalk.green('✅ Problem solving complete!\n'));
-
-        // Summary
-        console.log(chalk.cyan('📊 Solution Summary:'));
-        console.log(chalk.white(`   Tests Written: ${testsWritten}`));
-        console.log(chalk.white(`   Tests Passing: ${testsPassing}`));
-        console.log(chalk.white(`   Files Changed: ${filesChanged.length}`));
-        console.log();
-
-        if (filesChanged.length > 0) {
-          console.log(chalk.gray('   Files modified:'));
-          filesChanged.forEach(file => console.log(chalk.gray(`     - ${file}`)));
-          console.log();
-        }
-
-        // Show git diff
-        console.log(chalk.yellow('📝 Review changes:'));
-        console.log(chalk.gray(`   cd ${testPath}`));
-        console.log(chalk.gray(`   git log --oneline -5`));
-        console.log(chalk.gray(`   git diff origin/${defaultBranch}..test\n`));
-
-        console.log(chalk.gray(`   cd ${developPath}`));
-        console.log(chalk.gray(`   git log --oneline -5`));
-        console.log(chalk.gray(`   git diff origin/${defaultBranch}..develop\n`));
-
-        // Next steps
-        console.log(chalk.yellow('🚀 Next Steps:'));
-        console.log(chalk.white('   1. Review test files in'), chalk.cyan(testPath));
-        console.log(chalk.white('   2. Review fix in'), chalk.cyan(developPath));
-        console.log(chalk.white('   3. Run tests:'), chalk.gray(`cd ${developPath} && npm test`));
-        console.log(chalk.white('   4. Create PR:'), chalk.gray(`cd ${developPath} && gh pr create`));
-        console.log();
-
-      } finally {
-        // Restore original cwd
-        process.chdir(originalCwd);
-      }
+      // Workspaces ready - now use shell agents to solve
+      console.log(chalk.cyan('✨ Workspaces ready for problem solving!\n'));
+      
+      console.log(chalk.yellow('🎯 Recommended Approaches:\n'));
+      
+      // Approach 1: Planning Agent + Cursor
+      console.log(chalk.white('1️⃣  Generate Plan + Use Cursor (RECOMMENDED)'));
+      console.log(chalk.gray(`   ./agents/planning-agent.sh ${mainPath} \\`));
+      console.log(chalk.gray(`     "${problem}" \\`));
+      console.log(chalk.gray(`     SOLUTION_PLAN.md\n`));
+      console.log(chalk.gray(`   cursor ${mainPath}`));
+      console.log(chalk.gray(`   # Use plan with Cursor Composer\n`));
+      
+      // Approach 2: Shell TDD Orchestrator
+      console.log(chalk.white('2️⃣  Automated TDD with Shell Agents'));
+      console.log(chalk.gray(`   cd ${mainPath}`));
+      console.log(chalk.gray(`   ../../../agents/tdd-orchestrator.sh "${problem}" 5\n`));
+      
+      // Approach 3: Manual with workspace architecture
+      console.log(chalk.white('3️⃣  Manual TDD (Full Control)'));
+      console.log(chalk.gray(`   cd ${testPath}`));
+      console.log(chalk.gray(`   # Write tests manually (or with Cursor)`));
+      console.log(chalk.gray(`   git commit -m "test: ${problem.substring(0, 40)}"\n`));
+      console.log(chalk.gray(`   cd ${developPath}`));
+      console.log(chalk.gray(`   # Implement fix (or with Cursor)`));
+      console.log(chalk.gray(`   npm test && git commit\n`));
+      
+      console.log(chalk.yellow('📝 Review Setup:'));
+      console.log(chalk.gray(`   Main repo:    ${mainPath}`));
+      console.log(chalk.gray(`   Test workspace:    ${testPath}`));
+      console.log(chalk.gray(`   Develop workspace: ${developPath}`));
+      console.log();
+      
+      console.log(chalk.yellow('💡 Tips:'));
+      console.log(chalk.white('   - Use planning agent for structured guidance'));
+      console.log(chalk.white('   - Use Cursor for code implementation'));
+      console.log(chalk.white('   - Workspaces keep test/develop branches separate'));
+      console.log(chalk.white('   - Create PR from main workspace when ready'));
+      console.log();
 
     } catch (error: any) {
       spinner.fail(chalk.red('❌ Problem solving failed'));
