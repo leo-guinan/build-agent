@@ -120,8 +120,29 @@ Keep it actionable and specific.
 `;
 
       const testPlan = await testAgent.generate(testPlanPrompt);
-      const testPlanText = typeof testPlan === 'string' ? testPlan : testPlan.text || JSON.stringify(testPlan);
       
+      // Extract text from response (handle different formats)
+      let testPlanText = '';
+      if (typeof testPlan === 'string') {
+        testPlanText = testPlan;
+      } else if (testPlan && typeof testPlan === 'object') {
+        // Try different possible response formats
+        testPlanText = testPlan.text || testPlan.content || testPlan.message || '';
+        
+        // If still empty, check if it's a response object with nested text
+        if (!testPlanText && testPlan.response) {
+          testPlanText = testPlan.response.text || testPlan.response.content || '';
+        }
+        
+        // If still no text, try to find any string property
+        if (!testPlanText) {
+          const values = Object.values(testPlan);
+          const firstString = values.find(v => typeof v === 'string' && v.length > 50);
+          testPlanText = firstString || 'Error: Could not extract text from agent response';
+        }
+      }
+      
+      console.log(chalk.gray(`   Generated ${testPlanText.length} characters`));
       testPlanSpinner.succeed(chalk.green('✅ Test plan generated'));
 
       // Generate implementation plan using develop agent
@@ -187,8 +208,29 @@ Keep it specific and actionable for Cursor to implement.
 `;
 
       const implPlan = await developAgent.generate(implPlanPrompt);
-      const implPlanText = typeof implPlan === 'string' ? implPlan : implPlan.text || JSON.stringify(implPlan);
-
+      
+      // Extract text from response (handle different formats)
+      let implPlanText = '';
+      if (typeof implPlan === 'string') {
+        implPlanText = implPlan;
+      } else if (implPlan && typeof implPlan === 'object') {
+        // Try different possible response formats
+        implPlanText = implPlan.text || implPlan.content || implPlan.message || '';
+        
+        // If still empty, check if it's a response object with nested text
+        if (!implPlanText && implPlan.response) {
+          implPlanText = implPlan.response.text || implPlan.response.content || '';
+        }
+        
+        // If still no text, try to find any string property
+        if (!implPlanText) {
+          const values = Object.values(implPlan);
+          const firstString = values.find(v => typeof v === 'string' && v.length > 50);
+          implPlanText = firstString || 'Error: Could not extract text from agent response';
+        }
+      }
+      
+      console.log(chalk.gray(`   Generated ${implPlanText.length} characters`));
       implPlanSpinner.succeed(chalk.green('✅ Implementation plan generated'));
 
       // Generate complete solution plan
