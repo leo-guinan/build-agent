@@ -1,6 +1,7 @@
 {
   "name": "build-agent",
   "version": "0.1.0",
+  "type": "module",
   "description": "CLI tool for launching validated ideas with AI-guided waterfall methodology",
   "main": "dist/index.js",
   "bin": {
