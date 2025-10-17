@@ -6,9 +6,17 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib.sh"
 
+# Save original working directory
+ORIGINAL_DIR="$(pwd)"
+
 REPO_PATH="$1"
 PROBLEM="$2"
 OUTPUT_FILE="${3:-SOLUTION_PLAN.md}"
+
+# Make output file absolute if it's relative
+if [[ "$OUTPUT_FILE" != /* ]]; then
+    OUTPUT_FILE="$ORIGINAL_DIR/$OUTPUT_FILE"
+fi
 
 if [ -z "$PROBLEM" ]; then
     log_error "Usage: planning-agent.sh <repo-path-or-url> <problem-description> [output-file]"
