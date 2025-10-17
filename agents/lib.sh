@@ -37,7 +37,7 @@ log_debug() {
 # Usage: call_openrouter "prompt" "model" > output.txt
 call_openrouter() {
     local prompt="$1"
-    local model="${2:-google/gemini-2.0-flash-001:free}"
+    local model="${2:-google/gemini-2.0-flash-exp:free}"
     local api_key="${OPENROUTER_API_KEY}"
     
     if [ -z "$api_key" ]; then

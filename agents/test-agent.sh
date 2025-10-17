@@ -68,7 +68,7 @@ EOF
 )
 
 # Call OpenRouter
-TEST_CODE=$(call_openrouter "$TEST_PROMPT" "google/gemini-2.0-flash-001:free")
+TEST_CODE=$(call_openrouter "$TEST_PROMPT" "google/gemini-2.0-flash-exp:free")
 
 if [ -z "$TEST_CODE" ]; then
     log_error "Failed to generate test code"

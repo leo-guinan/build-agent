@@ -83,7 +83,7 @@ EOF
 )
 
 # Call OpenRouter
-IMPL_CODE=$(call_openrouter "$IMPL_PROMPT" "google/gemini-2.0-flash-001:free")
+IMPL_CODE=$(call_openrouter "$IMPL_PROMPT" "google/gemini-2.0-flash-exp:free")
 
 if [ -z "$IMPL_CODE" ]; then
     log_error "Failed to generate implementation code"

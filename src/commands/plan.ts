@@ -199,7 +199,7 @@ Keep it specific and actionable for Cursor to implement.
 
       // Use OpenRouter (no quota issues, many model choices)
       const implPlanResponse = await generateText({
-        model: openrouter('google/gemini-2.0-flash-001:free'), // Free, fast, good quality
+        model: openrouter('google/gemini-2.0-flash-exp:free'), // Free, fast, good quality
         prompt: implPlanPrompt,
       });
       

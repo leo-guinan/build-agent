@@ -36,7 +36,7 @@ response=$(curl -s https://openrouter.ai/api/v1/chat/completions \
   -H "HTTP-Referer: https://github.com/leoguinan/build-agent" \
   -H "X-Title: Build Agent CLI Test" \
   -d '{
-    "model": "google/gemini-2.0-flash-001:free",
+    "model": "google/gemini-2.0-flash-exp:free",
     "messages": [
       {"role": "user", "content": "Say \"API works!\" and nothing else."}
     ]
