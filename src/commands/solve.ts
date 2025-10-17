@@ -66,39 +66,6 @@ export const solveCommand = new Command('solve')
         }
       }
 
-      // Get default branch name
-      const defaultBranch = execSync('git branch --show-current', {
-        cwd: mainPath,
-        encoding: 'utf-8',
-      }).trim();
-
-      // Create test branch and workspace
-      spinner.text = 'Creating test workspace...';
-      const testPath = path.join(workspaceRoot, 'test');
-      if (!fs.existsSync(testPath)) {
-        // Create test branch in main repo (local only, no push)
-        execSync('git checkout -b test', { cwd: mainPath, stdio: 'pipe' });
-        
-        // Clone test workspace from local main repo
-        execSync(`git clone -b test ${mainPath} ${testPath}`, { stdio: 'pipe' });
-        
-        // Skip dependency install (workspaces share with main)
-      }
-
-      // Create develop branch and workspace
-      spinner.text = 'Creating develop workspace...';
-      const developPath = path.join(workspaceRoot, 'develop');
-      if (!fs.existsSync(developPath)) {
-        // Create develop branch from main (local only, no push)
-        execSync(`git checkout ${defaultBranch}`, { cwd: mainPath, stdio: 'pipe' });
-        execSync('git checkout -b develop', { cwd: mainPath, stdio: 'pipe' });
-        
-        // Clone develop workspace from local main repo
-        execSync(`git clone -b develop ${mainPath} ${developPath}`, { stdio: 'pipe' });
-        
-        // Skip dependency install (workspaces share with main)
-      }
-
       // Helper function to detect package manager
       function detectPackageManager(projectPath: string): 'pnpm' | 'yarn' | 'npm' {
         if (fs.existsSync(path.join(projectPath, 'pnpm-lock.yaml'))) {
@@ -110,14 +77,31 @@ export const solveCommand = new Command('solve')
         return 'npm';
       }
 
-      spinner.succeed(chalk.green('✅ Workspaces ready!\n'));
+      // Get default branch name
+      const defaultBranch = execSync('git branch --show-current', {
+        cwd: mainPath,
+        encoding: 'utf-8',
+      }).trim();
+
+      // Create feature branch for work
+      const featureBranchName = `fix/${problem.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 40)}`;
+      
+      try {
+        execSync(`git checkout -b ${featureBranchName}`, { cwd: mainPath, stdio: 'pipe' });
+        console.log(chalk.green(`   Created feature branch: ${featureBranchName}`));
+      } catch {
+        // Branch might already exist
+        execSync(`git checkout ${featureBranchName}`, { cwd: mainPath, stdio: 'pipe' });
+        console.log(chalk.gray(`   Using existing branch: ${featureBranchName}`));
+      }
+
+      spinner.succeed(chalk.green('✅ Workspace ready!\n'));
 
       // Show workspace structure
-      console.log(chalk.cyan('📁 Workspace Structure:'));
-      console.log(chalk.gray(`   ${workspaceRoot}/`));
-      console.log(chalk.gray(`   ├── main/     (${defaultBranch} branch - original)`));
-      console.log(chalk.gray(`   ├── test/     (test branch - for tests)`));
-      console.log(chalk.gray(`   └── develop/  (develop branch - for fixes)`));
+      console.log(chalk.cyan('📁 Workspace:'));
+      console.log(chalk.gray(`   ${mainPath}`));
+      console.log(chalk.gray(`   Branch: ${featureBranchName}`));
+      console.log(chalk.gray(`   Both test and develop agents work here`));
       console.log();
 
       // Workspaces ready - now orchestrate solution if requested
@@ -150,13 +134,13 @@ export const solveCommand = new Command('solve')
         console.log(chalk.white('   Plan:'), chalk.gray(planFile));
         console.log();
         
-        // Run TDD orchestrator
+        // Run TDD orchestrator (single workspace)
         console.log(chalk.yellow('🔄 Running TDD orchestrator...'));
         const tddSpinner = ora('Shell agents implementing...').start();
         
         try {
           const output = execSync(
-            `${path.join(process.cwd(), 'agents/tdd-orchestrator.sh')} "${problem}" 10 "${testPath}" "${developPath}"`,
+            `${path.join(process.cwd(), 'agents/tdd-orchestrator.sh')} "${problem}" 10 "${mainPath}" "${mainPath}"`,
             { encoding: 'utf-8' }
           );
           
@@ -173,8 +157,11 @@ export const solveCommand = new Command('solve')
         console.log(chalk.green('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
         console.log();
         console.log(chalk.yellow('📝 Review changes:'));
-        console.log(chalk.gray(`   cd ${testPath} && git log -5`));
-        console.log(chalk.gray(`   cd ${developPath} && git log -5`));
+        console.log(chalk.gray(`   cd ${mainPath} && git log -10`));
+        console.log(chalk.gray(`   cd ${mainPath} && git diff ${defaultBranch}..${featureBranchName}`));
+        console.log();
+        console.log(chalk.yellow('🧪 Run tests:'));
+        console.log(chalk.gray(`   cd ${mainPath} && npm test`));
         console.log();
         console.log(chalk.yellow('🚀 Create PR:'));
         console.log(chalk.gray(`   cd ${mainPath}`));
@@ -191,38 +178,31 @@ export const solveCommand = new Command('solve')
         console.log(chalk.gray(`     "${problem}" \\`));
         console.log(chalk.gray(`     SOLUTION_PLAN.md\n`));
         console.log(chalk.gray(`   cursor ${mainPath}`));
-        console.log(chalk.gray(`   # Use plan with Cursor Composer\n`));
+        console.log(chalk.gray(`   # Use plan with Cursor Composer to implement\n`));
         
         // Approach 2: Shell TDD Orchestrator
         console.log(chalk.white('2️⃣  Automated TDD with Shell Agents'));
-        console.log(chalk.gray(`   cd ${mainPath}`));
-        console.log(chalk.gray(`   ../../../agents/tdd-orchestrator.sh "${problem}" 5\n`));
-        
-        // Approach 3: Solve with shell agents
-        console.log(chalk.white('3️⃣  Fully Automated (Experimental)'));
         console.log(chalk.gray(`   build-agent solve "${repoUrl}" "${problem}" --use-shell-agents\n`));
         
-        // Approach 4: Manual with workspace architecture
-        console.log(chalk.white('4️⃣  Manual TDD (Full Control)'));
-        console.log(chalk.gray(`   cd ${testPath}`));
-        console.log(chalk.gray(`   # Write tests manually (or with Cursor)`));
-        console.log(chalk.gray(`   git commit -m "test: ${problem.substring(0, 40)}"\n`));
-        console.log(chalk.gray(`   cd ${developPath}`));
-        console.log(chalk.gray(`   # Implement fix (or with Cursor)`));
+        // Approach 3: Manual TDD
+        console.log(chalk.white('3️⃣  Manual TDD in Feature Branch'));
+        console.log(chalk.gray(`   cd ${mainPath}`));
+        console.log(chalk.gray(`   # Write tests`));
+        console.log(chalk.gray(`   git commit -m "test: ${problem.substring(0, 40)}"`));
+        console.log(chalk.gray(`   # Implement fix`));
         console.log(chalk.gray(`   npm test && git commit\n`));
         
-        console.log(chalk.yellow('📝 Review Setup:'));
-        console.log(chalk.gray(`   Main repo:         ${mainPath}`));
-        console.log(chalk.gray(`   Test workspace:    ${testPath}`));
-        console.log(chalk.gray(`   Develop workspace: ${developPath}`));
+        console.log(chalk.yellow('📝 Workspace Info:'));
+        console.log(chalk.gray(`   Path: ${mainPath}`));
+        console.log(chalk.gray(`   Branch: ${featureBranchName}`));
+        console.log(chalk.gray(`   Ready for development`));
         console.log();
         
         console.log(chalk.yellow('💡 Tips:'));
-        console.log(chalk.white('   - Use planning agent for structured guidance'));
-        console.log(chalk.white('   - Use Cursor for code implementation'));
-        console.log(chalk.white('   - Use --use-shell-agents for automation (experimental)'));
-        console.log(chalk.white('   - Workspaces keep test/develop branches separate'));
-        console.log(chalk.white('   - Create PR from main workspace when ready'));
+        console.log(chalk.white('   - Feature branch created automatically'));
+        console.log(chalk.white('   - Use planning agent for guidance'));
+        console.log(chalk.white('   - Use Cursor for implementation'));
+        console.log(chalk.white('   - Use --use-shell-agents for full automation'));
         console.log();
       }
 

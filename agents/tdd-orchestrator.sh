@@ -47,14 +47,20 @@ if [ ! -d "$TEST_WORKSPACE" ] || [ ! -d "$DEVELOP_WORKSPACE" ]; then
     exit 1
 fi
 
+# Note: TEST_WORKSPACE and DEVELOP_WORKSPACE can be the same for single-workspace mode
+WORKSPACE="$TEST_WORKSPACE"
+
+log_info "Working in: $WORKSPACE"
+echo ""
+
 # Phase 1: Write Tests (RED)
 log_info "📝 Phase 1: Writing tests..."
 echo ""
 
-bash "$SCRIPT_DIR/test-agent.sh" "$TEST_WORKSPACE" "$FEATURE"
+bash "$SCRIPT_DIR/test-agent.sh" "$WORKSPACE" "$FEATURE"
 
 # Get test file that was created
-TEST_FILE=$(cd "$TEST_WORKSPACE" && git log -1 --name-only --pretty=format: | grep "\.test\.ts$" | head -1)
+TEST_FILE=$(cd "$WORKSPACE" && git log -1 --name-only --pretty=format: | grep "\.test\.ts$" | head -1)
 
 if [ -z "$TEST_FILE" ]; then
     log_error "No test file found in last commit"
@@ -74,15 +80,15 @@ TESTS_PASS=false
 while [ $ITERATION -le $MAX_ITERATIONS ] && [ "$TESTS_PASS" = false ]; do
     log_info "Iteration $ITERATION/$MAX_ITERATIONS"
     
-    bash "$SCRIPT_DIR/develop-agent.sh" "$DEVELOP_WORKSPACE" "$TEST_FILE"
+    bash "$SCRIPT_DIR/develop-agent.sh" "$WORKSPACE" "$TEST_FILE"
     
     # Check if tests pass
-    cd "$DEVELOP_WORKSPACE"
+    cd "$WORKSPACE"
     if npm test -- "$TEST_FILE" >/dev/null 2>&1; then
         TESTS_PASS=true
         log_success "Tests PASS! Feature complete! ✓"
     else
-        log_warning "Tests still failing, iteration $((ITERATION + 1))..."
+        log_warning "Tests still failing, will iterate..."
     fi
     
     ITERATION=$((ITERATION + 1))
@@ -95,16 +101,7 @@ if [ "$TESTS_PASS" = false ]; then
     exit 1
 fi
 
-# Phase 3: Sync (merge develop → test)
-log_info "🔄 Phase 3: Syncing branches..."
-echo ""
-
-cd "$TEST_WORKSPACE"
-git pull origin develop
-git push origin test
-cd - >/dev/null
-
-log_success "Branches synced!"
+log_success "All tests passing!"
 echo ""
 
 # Summary
@@ -114,18 +111,20 @@ ${GREEN}🎉 TDD CYCLE COMPLETE!${NC}
 ${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}
 
 Feature: $FEATURE
+Workspace: $WORKSPACE
+Test file: $TEST_FILE
 
-✓ Tests written in $TEST_WORKSPACE
-✓ Implementation in $DEVELOP_WORKSPACE
-✓ Tests passing
-✓ Branches synced
+✓ Tests written and committed
+✓ Implementation written and committed
+✓ All tests passing
+✓ Ready for PR
 
 Iterations: $ITERATION/$MAX_ITERATIONS
 
 ${CYAN}Next steps:${NC}
-  Review changes: cd $DEVELOP_WORKSPACE && git log -3
-  Run all tests: cd $DEVELOP_WORKSPACE && npm test
-  Create PR: gh pr create
+  Review changes: cd $WORKSPACE && git log -10
+  Run all tests: cd $WORKSPACE && npm test
+  Create PR: cd $WORKSPACE && gh pr create
 
 ${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}
 EOF

@@ -25,24 +25,16 @@ validate_requirements || exit 1
 # Change to workspace
 cd "$WORKSPACE" || exit 1
 
-# Pull latest tests from test branch
-log_info "Pulling latest tests..."
+# Check if test file exists (should be in same workspace)
+log_info "Looking for test file: $TEST_FILE"
 
-# Try to fetch and merge from test branch
-if git fetch origin test 2>/dev/null; then
-    # Merge test branch changes
-    git merge origin/test --no-edit 2>/dev/null || true
-fi
-
-# Check if test file exists locally
 if [ ! -f "$TEST_FILE" ]; then
-    # Try to checkout from origin/test
-    git checkout origin/test -- "$TEST_FILE" 2>/dev/null || {
-        log_error "Test file not found: $TEST_FILE"
-        log_info "Available test files:"
-        find tests -name "*.test.ts" 2>/dev/null | head -10 || echo "  (none found)"
-        exit 1
-    }
+    log_error "Test file not found: $TEST_FILE"
+    log_info "Available test files:"
+    find tests -name "*.test.ts" 2>/dev/null | head -10 || echo "  (none found)"
+    log_info ""
+    log_info "Make sure test-agent ran first in the same workspace"
+    exit 1
 fi
 
 # Read test file
