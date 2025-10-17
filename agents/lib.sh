@@ -65,14 +65,26 @@ EOF
     local response=$(curl -s https://openrouter.ai/api/v1/chat/completions \
         -H "Authorization: Bearer $api_key" \
         -H "Content-Type: application/json" \
+        -H "HTTP-Referer: https://github.com/leoguinan/build-agent" \
+        -H "X-Title: Build Agent CLI" \
         -d "$json_payload")
+    
+    # Check for API errors first
+    local error=$(echo "$response" | jq -r '.error.message // empty')
+    if [ -n "$error" ]; then
+        log_error "API Error: $error"
+        log_debug "Full response: $response"
+        return 1
+    fi
     
     # Extract text from response
     local text=$(echo "$response" | jq -r '.choices[0].message.content // empty')
     
     if [ -z "$text" ]; then
         log_error "No response from API"
-        log_debug "Response: $response"
+        log_error "Response preview: $(echo "$response" | head -c 200)"
+        echo "$response" > /tmp/openrouter-error.json
+        log_info "Full response saved to: /tmp/openrouter-error.json"
         return 1
     fi
     
