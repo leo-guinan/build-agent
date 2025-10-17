@@ -27,11 +27,23 @@ cd "$WORKSPACE" || exit 1
 
 # Pull latest tests from test branch
 log_info "Pulling latest tests..."
-git fetch origin test 2>/dev/null || true
-git checkout test -- "$TEST_FILE" 2>/dev/null || {
-    log_error "Test file not found in test branch: $TEST_FILE"
-    exit 1
-}
+
+# Try to fetch and merge from test branch
+if git fetch origin test 2>/dev/null; then
+    # Merge test branch changes
+    git merge origin/test --no-edit 2>/dev/null || true
+fi
+
+# Check if test file exists locally
+if [ ! -f "$TEST_FILE" ]; then
+    # Try to checkout from origin/test
+    git checkout origin/test -- "$TEST_FILE" 2>/dev/null || {
+        log_error "Test file not found: $TEST_FILE"
+        log_info "Available test files:"
+        find tests -name "*.test.ts" 2>/dev/null | head -10 || echo "  (none found)"
+        exit 1
+    }
+fi
 
 # Read test file
 TEST_CODE=$(cat "$TEST_FILE")
