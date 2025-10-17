@@ -77,18 +77,45 @@ echo ""
 ITERATION=1
 TESTS_PASS=false
 
+LAST_ERROR=""
+REPEATED_ERROR_COUNT=0
+
 while [ $ITERATION -le $MAX_ITERATIONS ] && [ "$TESTS_PASS" = false ]; do
     log_info "Iteration $ITERATION/$MAX_ITERATIONS"
     
-    bash "$SCRIPT_DIR/develop-agent.sh" "$WORKSPACE" "$TEST_FILE"
+    # Pass last error to develop agent
+    bash "$SCRIPT_DIR/develop-agent.sh" "$WORKSPACE" "$TEST_FILE" "$LAST_ERROR"
     
-    # Check if tests pass
+    # Check if tests pass and capture output
     cd "$WORKSPACE"
-    if npm test -- "$TEST_FILE" >/dev/null 2>&1; then
+    TEST_OUTPUT=$(npm test -- "$TEST_FILE" 2>&1 || true)
+    
+    # Parse test output for actual pass/fail
+    if echo "$TEST_OUTPUT" | grep -q "Test Files.*[1-9].* passed"; then
         TESTS_PASS=true
         log_success "Tests PASS! Feature complete! ✓"
     else
+        # Extract error from output
+        CURRENT_ERROR=$(echo "$TEST_OUTPUT" | grep -E "(Error|TypeError|FAIL)" | head -5)
+        
+        # Check if same error repeated
+        if [ "$CURRENT_ERROR" = "$LAST_ERROR" ]; then
+            REPEATED_ERROR_COUNT=$((REPEATED_ERROR_COUNT + 1))
+        else
+            REPEATED_ERROR_COUNT=0
+        fi
+        
+        LAST_ERROR="$CURRENT_ERROR"
+        
+        # Early termination if same error 3 times
+        if [ $REPEATED_ERROR_COUNT -ge 3 ]; then
+            log_error "Same error repeated 3 times. Stopping iteration."
+            log_error "Error: $CURRENT_ERROR"
+            break
+        fi
+        
         log_warning "Tests still failing, will iterate..."
+        log_info "Error: $CURRENT_ERROR"
     fi
     
     ITERATION=$((ITERATION + 1))

@@ -9,15 +9,19 @@ source "$SCRIPT_DIR/lib.sh"
 # Workspace: .build-agent/develop/
 WORKSPACE="${1:-.build-agent/develop}"
 TEST_FILE="$2"
+PREVIOUS_ERROR="${3:-}"
 
 if [ -z "$TEST_FILE" ]; then
-    log_error "Usage: develop-agent.sh <workspace> <test-file-path>"
+    log_error "Usage: develop-agent.sh <workspace> <test-file-path> [previous-error]"
     exit 1
 fi
 
 log_info "Develop Agent starting..."
 log_info "Workspace: $WORKSPACE"
 log_info "Test file: $TEST_FILE"
+if [ -n "$PREVIOUS_ERROR" ]; then
+    log_info "Previous error: $PREVIOUS_ERROR"
+fi
 
 # Validate requirements
 validate_requirements || exit 1
@@ -53,6 +57,20 @@ FILE_TREE=$(find src -type f 2>/dev/null | head -30 || echo "")
 # Generate implementation
 log_info "Generating implementation..."
 
+ERROR_CONTEXT=""
+if [ -n "$PREVIOUS_ERROR" ]; then
+    ERROR_CONTEXT=$(cat <<EOF
+
+PREVIOUS ATTEMPT FAILED WITH:
+$PREVIOUS_ERROR
+
+IMPORTANT: Your previous implementation caused the above error.
+Analyze what went wrong and FIX IT in this iteration.
+Do NOT repeat the same mistake.
+EOF
+)
+fi
+
 IMPL_PROMPT=$(cat <<EOF
 You are an expert TypeScript developer focused on TDD and clean code.
 
@@ -67,6 +85,7 @@ $PACKAGE_INFO
 
 Existing files:
 $FILE_TREE
+$ERROR_CONTEXT
 
 YOUR TASK:
 Write the MINIMAL implementation needed to make this test pass.
@@ -103,23 +122,16 @@ log_info "Writing implementation file: $IMPL_FILE"
 # Write implementation file
 write_file "$IMPL_FILE" "$IMPL_CODE"
 
-# Run tests
+# Run tests (orchestrator will check results, we just run them here for logging)
 log_info "Running tests..."
-if npm test -- "$TEST_FILE" 2>&1 | tee /tmp/test-output.log; then
-    log_success "Tests PASS! ✓"
-    TESTS_PASS=true
-else
-    log_warning "Tests FAIL (expected for TDD)"
-    TESTS_PASS=false
-fi
+npm test -- "$TEST_FILE" 2>&1 | tee /tmp/test-output.log || true
 
-# Commit
+# Commit (orchestrator determines pass/fail, we always commit for TDD cycle)
 commit_changes "feat: Implement $(basename "$IMPL_FILE" .ts)"
 
 log_success "Develop agent complete!"
 log_info "Implementation file: $IMPL_FILE"
 log_info "Lines: $(echo "$IMPL_CODE" | wc -l)"
-log_info "Tests: $TESTS_PASS"
 
 # Output summary
 cat <<EOF
@@ -127,8 +139,7 @@ cat <<EOF
 💻 Implementation Created:
    File: $IMPL_FILE
    Lines: $(echo "$IMPL_CODE" | wc -l)
-   Tests: $([ "$TESTS_PASS" = true ] && echo "✓ PASS" || echo "✗ FAIL")
    
-$([ "$TESTS_PASS" = true ] && echo "🎉 Feature complete!" || echo "🔄 Need more work (run again)")
+🔄 Orchestrator will verify test results
 EOF
 

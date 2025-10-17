@@ -52,14 +52,25 @@ File structure:
 $FILE_TREE
 
 YOUR TASK:
-Write comprehensive test code for this feature.
+Analyze the feature description carefully:
+1. If this is a NEW feature, create tests for a new module
+2. If this is a BUG FIX, identify which EXISTING file needs testing and import from it
+3. If unclear, create tests for a new module
+
+Write comprehensive test code using Vitest.
+
+CRITICAL REQUIREMENTS:
+- Import from EXISTING files in the codebase when fixing bugs
+- Use correct import paths (check the file structure above)
+- All imports must be valid TypeScript module paths
+- Test file must be able to RUN (no import errors)
 
 Output ONLY the test code, ready to save to a file.
 Include:
-- All necessary imports
+- All necessary imports (with correct paths!)
 - describe() blocks
 - test() cases for happy path and edge cases
-- Mocks for external dependencies
+- Mocks for external dependencies if needed
 - TypeScript types
 
 Format as complete, runnable Vitest test file.
