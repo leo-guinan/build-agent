@@ -1,0 +1,10 @@
+{
+  "sessionId": "spawn-1760721571681",
+  "date": "2025-10-17T17:19:31.681Z",
+  "totalTime": "29.5s",
+  "agentsSpawned": 7,
+  "successRate": "100%",
+  "totalSteps": 70,
+  "avgStepsPerAgent": "10.0",
+  "failures": 0
+}

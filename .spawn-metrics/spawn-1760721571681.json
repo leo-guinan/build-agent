@@ -1,0 +1,144 @@
+{
+  "sessionId": "spawn-1760721571681",
+  "startTime": 1760721571681,
+  "agentsSpawned": [
+    {
+      "agentName": "entrepreneur",
+      "startTime": 1760721577116,
+      "steps": [
+        "Validate transform",
+        "Create directory",
+        "Copy source files",
+        "Update package.json",
+        "Create identity",
+        "Update CLI",
+        "Initialize git",
+        "Install dependencies",
+        "Build",
+        "Link globally"
+      ],
+      "success": true,
+      "endTime": 1760721580799,
+      "duration": 3683
+    },
+    {
+      "agentName": "builder",
+      "startTime": 1760721580799,
+      "steps": [
+        "Validate transform",
+        "Create directory",
+        "Copy source files",
+        "Update package.json",
+        "Create identity",
+        "Update CLI",
+        "Initialize git",
+        "Install dependencies",
+        "Build",
+        "Link globally"
+      ],
+      "success": true,
+      "endTime": 1760721584208,
+      "duration": 3409
+    },
+    {
+      "agentName": "activist",
+      "startTime": 1760721584209,
+      "steps": [
+        "Validate transform",
+        "Create directory",
+        "Copy source files",
+        "Update package.json",
+        "Create identity",
+        "Update CLI",
+        "Initialize git",
+        "Install dependencies",
+        "Build",
+        "Link globally"
+      ],
+      "success": true,
+      "endTime": 1760721587620,
+      "duration": 3411
+    },
+    {
+      "agentName": "speculator",
+      "startTime": 1760721587620,
+      "steps": [
+        "Validate transform",
+        "Create directory",
+        "Copy source files",
+        "Update package.json",
+        "Create identity",
+        "Update CLI",
+        "Initialize git",
+        "Install dependencies",
+        "Build",
+        "Link globally"
+      ],
+      "success": true,
+      "endTime": 1760721590986,
+      "duration": 3366
+    },
+    {
+      "agentName": "researcher",
+      "startTime": 1760721590986,
+      "steps": [
+        "Validate transform",
+        "Create directory",
+        "Copy source files",
+        "Update package.json",
+        "Create identity",
+        "Update CLI",
+        "Initialize git",
+        "Install dependencies",
+        "Build",
+        "Link globally"
+      ],
+      "success": true,
+      "endTime": 1760721594369,
+      "duration": 3383
+    },
+    {
+      "agentName": "whale",
+      "startTime": 1760721594369,
+      "steps": [
+        "Validate transform",
+        "Create directory",
+        "Copy source files",
+        "Update package.json",
+        "Create identity",
+        "Update CLI",
+        "Initialize git",
+        "Install dependencies",
+        "Build",
+        "Link globally"
+      ],
+      "success": true,
+      "endTime": 1760721597737,
+      "duration": 3368
+    },
+    {
+      "agentName": "validator",
+      "startTime": 1760721597737,
+      "steps": [
+        "Validate transform",
+        "Create directory",
+        "Copy source files",
+        "Update package.json",
+        "Create identity",
+        "Update CLI",
+        "Initialize git",
+        "Install dependencies",
+        "Build",
+        "Link globally"
+      ],
+      "success": true,
+      "endTime": 1760721601144,
+      "duration": 3407
+    }
+  ],
+  "successRate": 100,
+  "totalSteps": 70,
+  "failures": [],
+  "endTime": 1760721601145,
+  "totalDuration": 29464
+}

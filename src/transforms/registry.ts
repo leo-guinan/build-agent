@@ -11,18 +11,20 @@ import { builderTransform } from './builder.js';
 import { activistTransform } from './activist.js';
 import { speculatorTransform } from './speculator.js';
 import { researcherTransform } from './researcher.js';
+import { whaleTransform } from './whale.js';
+import { validatorTransform } from './validator.js';
 
 /**
  * Available transforms
  * 
- * Complete multi-agent system:
+ * COMPLETE MULTI-AGENT BUSINESS SYSTEM (7 of 7):/
  * - entrepreneur: ROI accuracy game → Financial tracking
  * - builder: Ship velocity game → AI cofounder webapp
  * - activist: Pivot speed game → Marketing page
  * - speculator: Future accuracy game → Sales/investment flows
  * - researcher: Pattern recognition game → External context
- * - validator: User feedback game (coming soon)
- * - whale: Scale/impact game (coming soon)
+ * - whale: Capital deployment game → Fundraising strategy
+ * - validator: System coherence game → Quality control
  */
 export const transforms: Record<string, Transform> = {
   entrepreneur: entrepreneurTransform,
@@ -30,10 +32,8 @@ export const transforms: Record<string, Transform> = {
   activist: activistTransform,
   speculator: speculatorTransform,
   researcher: researcherTransform,
-  
-  // Future transforms (commented out until implemented)
-  // validator: validatorTransform,
-  // whale: whaleTransform,
+  whale: whaleTransform,
+  validator: validatorTransform,
 };
 
 /**
@@ -91,17 +91,17 @@ export const transformDescriptions: Record<string, { name: string; game: string;
     emoji: '🔬',
     output: 'External Context & Intelligence',
   },
-  validator: {
-    name: 'Validator Agent',
-    game: 'User Feedback (Validation / Assumption)',
-    emoji: '✅',
-    output: 'Validation System (coming soon)',
-  },
   whale: {
     name: 'Whale Agent',
-    game: 'Scale Impact (Users × Value)',
+    game: 'Capital Deployment (Impact × Timing)',
     emoji: '🐋',
-    output: 'Scale Strategy (coming soon)',
+    output: 'Fundraising Strategy & Capital Allocation',
+  },
+  validator: {
+    name: 'Validator Agent',
+    game: 'System Coherence (Prediction / Reality)',
+    emoji: '✅',
+    output: 'Validation System & Quality Control',
   },
 };
 
@@ -122,8 +122,10 @@ export function getTransformDescription(id: string) {
  */
 export function getTransformsByCategory() {
   return {
-    core: ['entrepreneur', 'builder', 'activist', 'speculator', 'researcher'],
-    experimental: ['validator', 'whale'],
+    business: ['entrepreneur', 'speculator', 'whale'],
+    product: ['builder', 'activist'],
+    intelligence: ['researcher', 'validator'],
+    all: ['entrepreneur', 'builder', 'activist', 'speculator', 'researcher', 'whale', 'validator'],
   };
 }
 
