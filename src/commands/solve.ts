@@ -156,7 +156,7 @@ export const solveCommand = new Command('solve')
         
         try {
           const output = execSync(
-            `cd "${mainPath}" && ${path.join(process.cwd(), 'agents/tdd-orchestrator.sh')} "${problem}" 10`,
+            `${path.join(process.cwd(), 'agents/tdd-orchestrator.sh')} "${problem}" 10 "${testPath}" "${developPath}"`,
             { encoding: 'utf-8' }
           );
           

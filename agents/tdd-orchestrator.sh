@@ -8,12 +8,15 @@ source "$SCRIPT_DIR/lib.sh"
 
 FEATURE="$1"
 MAX_ITERATIONS="${2:-10}"
+TEST_WORKSPACE="${3:-.build-agent/test}"
+DEVELOP_WORKSPACE="${4:-.build-agent/develop}"
 
 if [ -z "$FEATURE" ]; then
-    log_error "Usage: tdd-orchestrator.sh <feature-description> [max-iterations]"
+    log_error "Usage: tdd-orchestrator.sh <feature-description> [max-iterations] [test-workspace] [develop-workspace]"
     echo ""
     echo "Example:"
-    echo "  tdd-orchestrator.sh \"Add hello command that prints greeting\" 5"
+    echo "  tdd-orchestrator.sh \"Add hello command\" 5"
+    echo "  tdd-orchestrator.sh \"Fix bug\" 10 ../test ../develop"
     exit 1
 fi
 
@@ -25,14 +28,22 @@ echo ""
 # Validate requirements
 validate_requirements || exit 1
 
-# Workspace paths
-TEST_WORKSPACE=".build-agent/test"
-DEVELOP_WORKSPACE=".build-agent/develop"
+# Resolve workspace paths to absolute
+if [[ "$TEST_WORKSPACE" != /* ]]; then
+    TEST_WORKSPACE="$(cd "$TEST_WORKSPACE" 2>/dev/null && pwd || echo "$TEST_WORKSPACE")"
+fi
+if [[ "$DEVELOP_WORKSPACE" != /* ]]; then
+    DEVELOP_WORKSPACE="$(cd "$DEVELOP_WORKSPACE" 2>/dev/null && pwd || echo "$DEVELOP_WORKSPACE")"
+fi
 
 # Check workspaces exist
 if [ ! -d "$TEST_WORKSPACE" ] || [ ! -d "$DEVELOP_WORKSPACE" ]; then
-    log_error "Workspaces not initialized"
-    log_info "Run: npm run dev workspace init"
+    log_error "Workspaces not found:"
+    log_info "  Test: $TEST_WORKSPACE"
+    log_info "  Develop: $DEVELOP_WORKSPACE"
+    log_info ""
+    log_info "For .build-agent workspaces: npm run dev workspace init"
+    log_info "For solve workspaces: Use workspaces/repo/test and workspaces/repo/develop"
     exit 1
 fi
 
