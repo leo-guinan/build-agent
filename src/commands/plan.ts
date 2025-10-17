@@ -126,7 +126,7 @@ Keep it actionable and specific.
 
       // Use OpenRouter (no quota issues, many model choices)
       const testPlanResponse = await generateText({
-        model: openrouter('google/gemini-2.0-flash-001:free'), // Free, fast, good quality
+        model: openrouter('google/gemini-2.0-flash-exp:free'), // Free, fast, good quality
         prompt: testPlanPrompt,
       });
       
