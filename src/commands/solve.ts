@@ -12,6 +12,8 @@ export const solveCommand = new Command('solve')
   .option('--workspace-dir <dir>', 'Workspace directory', './workspaces')
   .option('--timeout <seconds>', 'Timeout in seconds', '600')
   .option('--skip-install', 'Skip dependency installation (faster)', false)
+  .option('--use-shell-agents', 'Use shell agents to implement solution', false)
+  .option('--plan <file>', 'Use existing plan file (from plan command)', '')
   .action(async (repoUrl: string, problem: string, options) => {
     console.log(chalk.cyan('🔧 Problem Solver Starting...\n'));
     console.log(chalk.white('Repository:'), chalk.gray(repoUrl));
@@ -118,45 +120,111 @@ export const solveCommand = new Command('solve')
       console.log(chalk.gray(`   └── develop/  (develop branch - for fixes)`));
       console.log();
 
-      // Workspaces ready - now use shell agents to solve
+      // Workspaces ready - now orchestrate solution if requested
       console.log(chalk.cyan('✨ Workspaces ready for problem solving!\n'));
       
-      console.log(chalk.yellow('🎯 Recommended Approaches:\n'));
-      
-      // Approach 1: Planning Agent + Cursor
-      console.log(chalk.white('1️⃣  Generate Plan + Use Cursor (RECOMMENDED)'));
-      console.log(chalk.gray(`   ./agents/planning-agent.sh ${mainPath} \\`));
-      console.log(chalk.gray(`     "${problem}" \\`));
-      console.log(chalk.gray(`     SOLUTION_PLAN.md\n`));
-      console.log(chalk.gray(`   cursor ${mainPath}`));
-      console.log(chalk.gray(`   # Use plan with Cursor Composer\n`));
-      
-      // Approach 2: Shell TDD Orchestrator
-      console.log(chalk.white('2️⃣  Automated TDD with Shell Agents'));
-      console.log(chalk.gray(`   cd ${mainPath}`));
-      console.log(chalk.gray(`   ../../../agents/tdd-orchestrator.sh "${problem}" 5\n`));
-      
-      // Approach 3: Manual with workspace architecture
-      console.log(chalk.white('3️⃣  Manual TDD (Full Control)'));
-      console.log(chalk.gray(`   cd ${testPath}`));
-      console.log(chalk.gray(`   # Write tests manually (or with Cursor)`));
-      console.log(chalk.gray(`   git commit -m "test: ${problem.substring(0, 40)}"\n`));
-      console.log(chalk.gray(`   cd ${developPath}`));
-      console.log(chalk.gray(`   # Implement fix (or with Cursor)`));
-      console.log(chalk.gray(`   npm test && git commit\n`));
-      
-      console.log(chalk.yellow('📝 Review Setup:'));
-      console.log(chalk.gray(`   Main repo:    ${mainPath}`));
-      console.log(chalk.gray(`   Test workspace:    ${testPath}`));
-      console.log(chalk.gray(`   Develop workspace: ${developPath}`));
-      console.log();
-      
-      console.log(chalk.yellow('💡 Tips:'));
-      console.log(chalk.white('   - Use planning agent for structured guidance'));
-      console.log(chalk.white('   - Use Cursor for code implementation'));
-      console.log(chalk.white('   - Workspaces keep test/develop branches separate'));
-      console.log(chalk.white('   - Create PR from main workspace when ready'));
-      console.log();
+      // Check if we should use shell agents to implement
+      if (options.useShellAgents) {
+        console.log(chalk.cyan('🤖 Using shell agents to implement solution...\n'));
+        
+        // Generate or load plan
+        let planFile = options.plan;
+        if (!planFile) {
+          console.log(chalk.yellow('📋 No plan provided, generating one...'));
+          planFile = path.join(mainPath, 'SOLUTION_PLAN.md');
+          
+          const planSpinner = ora('Planning agent analyzing...').start();
+          
+          try {
+            execSync(
+              `${path.join(process.cwd(), 'agents/planning-agent.sh')} "${mainPath}" "${problem}" "${planFile}"`,
+              { stdio: 'pipe' }
+            );
+            planSpinner.succeed(chalk.green('✅ Plan generated'));
+          } catch (error: any) {
+            planSpinner.fail(chalk.red('❌ Plan generation failed'));
+            throw error;
+          }
+        }
+        
+        console.log(chalk.white('   Plan:'), chalk.gray(planFile));
+        console.log();
+        
+        // Run TDD orchestrator
+        console.log(chalk.yellow('🔄 Running TDD orchestrator...'));
+        const tddSpinner = ora('Shell agents implementing...').start();
+        
+        try {
+          const output = execSync(
+            `cd "${mainPath}" && ${path.join(process.cwd(), 'agents/tdd-orchestrator.sh')} "${problem}" 10`,
+            { encoding: 'utf-8' }
+          );
+          
+          tddSpinner.succeed(chalk.green('✅ TDD cycle complete!'));
+          console.log(output);
+        } catch (error: any) {
+          tddSpinner.fail(chalk.red('❌ TDD cycle failed'));
+          console.log(chalk.gray(error.stdout || error.message));
+        }
+        
+        console.log();
+        console.log(chalk.green('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
+        console.log(chalk.green('🎉 SOLUTION COMPLETE!'));
+        console.log(chalk.green('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
+        console.log();
+        console.log(chalk.yellow('📝 Review changes:'));
+        console.log(chalk.gray(`   cd ${testPath} && git log -5`));
+        console.log(chalk.gray(`   cd ${developPath} && git log -5`));
+        console.log();
+        console.log(chalk.yellow('🚀 Create PR:'));
+        console.log(chalk.gray(`   cd ${mainPath}`));
+        console.log(chalk.gray(`   gh pr create`));
+        console.log();
+        
+      } else {
+        // Manual approaches
+        console.log(chalk.yellow('🎯 Recommended Approaches:\n'));
+        
+        // Approach 1: Planning Agent + Cursor
+        console.log(chalk.white('1️⃣  Generate Plan + Use Cursor (RECOMMENDED)'));
+        console.log(chalk.gray(`   ./agents/planning-agent.sh ${mainPath} \\`));
+        console.log(chalk.gray(`     "${problem}" \\`));
+        console.log(chalk.gray(`     SOLUTION_PLAN.md\n`));
+        console.log(chalk.gray(`   cursor ${mainPath}`));
+        console.log(chalk.gray(`   # Use plan with Cursor Composer\n`));
+        
+        // Approach 2: Shell TDD Orchestrator
+        console.log(chalk.white('2️⃣  Automated TDD with Shell Agents'));
+        console.log(chalk.gray(`   cd ${mainPath}`));
+        console.log(chalk.gray(`   ../../../agents/tdd-orchestrator.sh "${problem}" 5\n`));
+        
+        // Approach 3: Solve with shell agents
+        console.log(chalk.white('3️⃣  Fully Automated (Experimental)'));
+        console.log(chalk.gray(`   build-agent solve "${repoUrl}" "${problem}" --use-shell-agents\n`));
+        
+        // Approach 4: Manual with workspace architecture
+        console.log(chalk.white('4️⃣  Manual TDD (Full Control)'));
+        console.log(chalk.gray(`   cd ${testPath}`));
+        console.log(chalk.gray(`   # Write tests manually (or with Cursor)`));
+        console.log(chalk.gray(`   git commit -m "test: ${problem.substring(0, 40)}"\n`));
+        console.log(chalk.gray(`   cd ${developPath}`));
+        console.log(chalk.gray(`   # Implement fix (or with Cursor)`));
+        console.log(chalk.gray(`   npm test && git commit\n`));
+        
+        console.log(chalk.yellow('📝 Review Setup:'));
+        console.log(chalk.gray(`   Main repo:         ${mainPath}`));
+        console.log(chalk.gray(`   Test workspace:    ${testPath}`));
+        console.log(chalk.gray(`   Develop workspace: ${developPath}`));
+        console.log();
+        
+        console.log(chalk.yellow('💡 Tips:'));
+        console.log(chalk.white('   - Use planning agent for structured guidance'));
+        console.log(chalk.white('   - Use Cursor for code implementation'));
+        console.log(chalk.white('   - Use --use-shell-agents for automation (experimental)'));
+        console.log(chalk.white('   - Workspaces keep test/develop branches separate'));
+        console.log(chalk.white('   - Create PR from main workspace when ready'));
+        console.log();
+      }
 
     } catch (error: any) {
       spinner.fail(chalk.red('❌ Problem solving failed'));
